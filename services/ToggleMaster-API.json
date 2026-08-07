@@ -1,0 +1,418 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-07-06T14:24:00.000Z",
+  "__export_source": "insomnia.desktop",
+  "resources": [
+    {
+      "_id": "wrk_togglemaster",
+      "parentId": null,
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "name": "ToggleMaster",
+      "description": "API test suite for ToggleMaster services with AWS SQS integration",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_local",
+      "parentId": "wrk_togglemaster",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "name": "Local",
+      "data": {
+        "base_url": "http://localhost",
+        "auth_port": "8001",
+        "flag_port": "8002",
+        "targeting_port": "8003",
+        "evaluation_port": "8004",
+        "analytics_port": "8005",
+        "master_key": "admin-secreto-123",
+        "service_api_key": "tm_key_044732ad26fd8ccd8e499b0a5e21023079dfea055fccac9a5a9074a1ac70f4fa"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url",
+          "auth_port",
+          "flag_port",
+          "targeting_port",
+          "evaluation_port",
+          "analytics_port",
+          "master_key",
+          "service_api_key"
+        ]
+      },
+      "_type": "environment"
+    },
+    {
+      "_id": "fld_auth_service",
+      "parentId": "wrk_togglemaster",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "name": "Auth Service",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_auth_health",
+      "parentId": "fld_auth_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8001/health",
+      "name": "Health Check",
+      "description": "Check auth service health status",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": "-1719577440000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_create_key",
+      "parentId": "fld_auth_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8001/admin/keys",
+      "name": "Create API Key",
+      "description": "Create a new API key using MASTER_KEY",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"name\": \"evaluation-service-test\"}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer admin-secreto-123",
+          "description": "Master key for admin operations"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": "-1719577430000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_validate",
+      "parentId": "fld_auth_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8001/validate",
+      "name": "Validate API Key",
+      "description": "Validate an API key by passing it in Authorization header",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer tm_key_044732ad26fd8ccd8e499b0a5e21023079dfea055fccac9a5a9074a1ac70f4fa",
+          "description": "Service API key to validate"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": "-1719577420000",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_flag_service",
+      "parentId": "wrk_togglemaster",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "name": "Flag Service",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_flag_health",
+      "parentId": "fld_flag_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8002/health",
+      "name": "Health Check",
+      "description": "Check flag service health status",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": "-1719577440000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_flag_list",
+      "parentId": "fld_flag_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8002/flags",
+      "name": "List All Flags",
+      "description": "List all feature flags",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer tm_key_044732ad26fd8ccd8e499b0a5e21023079dfea055fccac9a5a9074a1ac70f4fa"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": "-1719577430000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_flag_create",
+      "parentId": "fld_flag_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8002/flags",
+      "name": "Create Flag",
+      "description": "Create a new feature flag",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"name\": \"new-feature\", \"description\": \"Test feature flag\", \"is_enabled\": true}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer tm_key_044732ad26fd8ccd8e499b0a5e21023079dfea055fccac9a5a9074a1ac70f4fa"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": "-1719577420000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_flag_get",
+      "parentId": "fld_flag_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8002/flags/test-flag",
+      "name": "Get Flag by Name",
+      "description": "Get details of a specific feature flag",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer tm_key_044732ad26fd8ccd8e499b0a5e21023079dfea055fccac9a5a9074a1ac70f4fa"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": "-1719577410000",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_targeting_service",
+      "parentId": "wrk_togglemaster",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "name": "Targeting Service",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_targeting_health",
+      "parentId": "fld_targeting_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8003/health",
+      "name": "Health Check",
+      "description": "Check targeting service health status",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": "-1719577440000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_targeting_create_rule",
+      "parentId": "fld_targeting_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8003/rules",
+      "name": "Create Targeting Rule",
+      "description": "Create a targeting rule for a feature flag",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"flag_name\": \"test-flag\", \"is_enabled\": true, \"rules\": {\"type\": \"PERCENTAGE\", \"value\": 50}}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer tm_key_044732ad26fd8ccd8e499b0a5e21023079dfea055fccac9a5a9074a1ac70f4fa"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": "-1719577430000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_targeting_get_rule",
+      "parentId": "fld_targeting_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8003/rules/test-flag",
+      "name": "Get Targeting Rule",
+      "description": "Get targeting rule for a specific flag",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer tm_key_044732ad26fd8ccd8e499b0a5e21023079dfea055fccac9a5a9074a1ac70f4fa"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": "-1719577420000",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_evaluation_service",
+      "parentId": "wrk_togglemaster",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "name": "Evaluation Service (SQS)",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_evaluation_health",
+      "parentId": "fld_evaluation_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8004/health",
+      "name": "Health Check",
+      "description": "Check evaluation service health status",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": "-1719577440000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_evaluation_test_1",
+      "parentId": "fld_evaluation_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8004/evaluate?user_id=test-user-123&flag_name=test-flag",
+      "name": "Evaluate Flag (User 1) - Sends to SQS",
+      "description": "Evaluate test-flag for user and trigger SQS event (deterministic hash distribution)",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "user_id",
+          "value": "test-user-123",
+          "description": "User ID to evaluate"
+        },
+        {
+          "name": "flag_name",
+          "value": "test-flag",
+          "description": "Flag name to evaluate"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": "-1719577430000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_evaluation_test_2",
+      "parentId": "fld_evaluation_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8004/evaluate?user_id=user-abc&flag_name=test-flag",
+      "name": "Evaluate Flag (User 2) - Sends to SQS",
+      "description": "Evaluate test-flag for different user and trigger SQS event",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "user_id",
+          "value": "user-abc",
+          "description": "User ID to evaluate"
+        },
+        {
+          "name": "flag_name",
+          "value": "test-flag",
+          "description": "Flag name to evaluate"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": "-1719577420000",
+      "_type": "request"
+    },
+    {
+      "_id": "req_evaluation_test_3",
+      "parentId": "fld_evaluation_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8004/evaluate?user_id=prod-user&flag_name=test-flag",
+      "name": "Evaluate Flag (User 3) - Sends to SQS",
+      "description": "Evaluate test-flag for another user with different deterministic result",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "user_id",
+          "value": "prod-user",
+          "description": "User ID to evaluate"
+        },
+        {
+          "name": "flag_name",
+          "value": "test-flag",
+          "description": "Flag name to evaluate"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": "-1719577410000",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_analytics_service",
+      "parentId": "wrk_togglemaster",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "name": "Analytics Service (Reads from SQS)",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_analytics_health",
+      "parentId": "fld_analytics_service",
+      "modified": 1719577440000,
+      "created": 1719577440000,
+      "url": "http://localhost:8005/health",
+      "name": "Health Check",
+      "description": "Check analytics service health status - verifies SQS consumer is running",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": "-1719577440000",
+      "_type": "request"
+    }
+  ]
+}
