@@ -1,0 +1,30 @@
+# =============================================================================
+# CI Pipeline - Analytics Service (Python)
+# =============================================================================
+
+name: CI - Analytics Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/analytics-service/**'
+      - '.github/workflows/ci-analytics-service.yml'
+      - '.github/workflows/_reusable-python-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/analytics-service/**'
+      - '.github/workflows/ci-analytics-service.yml'
+      - '.github/workflows/_reusable-python-ci.yml'
+
+jobs:
+  ci:
+    name: Analytics Service CI
+    uses: ./.github/workflows/_reusable-python-ci.yml
+    with:
+      service_name: analytics-service
+      service_path: services/analytics-service
+      python_version: '3.12'
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}

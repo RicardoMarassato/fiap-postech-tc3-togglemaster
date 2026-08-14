@@ -1,0 +1,88 @@
+# =============================================================================
+# Evaluation Service - Kubernetes Deployment
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evaluation-service
+  namespace: togglemaster
+  labels:
+    app: evaluation-service
+    app.kubernetes.io/name: evaluation-service
+    app.kubernetes.io/part-of: togglemaster
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: evaluation-service
+  template:
+    metadata:
+      labels:
+        app: evaluation-service
+    spec:
+      containers:
+        - name: evaluation-service
+          image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/togglemaster/evaluation-service:latest
+          ports:
+            - containerPort: 8004
+              name: http
+          env:
+            - name: PORT
+              value: "8004"
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: url
+            - name: FLAG_SERVICE_URL
+              value: "http://flag-service:8002"
+            - name: TARGETING_SERVICE_URL
+              value: "http://targeting-service:8003"
+            - name: SERVICE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: evaluation-service-secrets
+                  key: api-key
+            - name: AWS_REGION
+              value: "us-east-1"
+            - name: AWS_SQS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: aws-config
+                  key: sqs-url
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: evaluation-service
+  namespace: togglemaster
+  labels:
+    app: evaluation-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8004
+      targetPort: 8004
+      protocol: TCP
+      name: http
+  selector:
+    app: evaluation-service

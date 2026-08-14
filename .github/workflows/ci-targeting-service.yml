@@ -1,0 +1,30 @@
+# =============================================================================
+# CI Pipeline - Targeting Service (Python)
+# =============================================================================
+
+name: CI - Targeting Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/targeting-service/**'
+      - '.github/workflows/ci-targeting-service.yml'
+      - '.github/workflows/_reusable-python-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/targeting-service/**'
+      - '.github/workflows/ci-targeting-service.yml'
+      - '.github/workflows/_reusable-python-ci.yml'
+
+jobs:
+  ci:
+    name: Targeting Service CI
+    uses: ./.github/workflows/_reusable-python-ci.yml
+    with:
+      service_name: targeting-service
+      service_path: services/targeting-service
+      python_version: '3.12'
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}

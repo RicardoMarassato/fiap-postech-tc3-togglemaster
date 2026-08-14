@@ -1,0 +1,25 @@
+# =============================================================================
+# ConfigMaps - Configurações não sensíveis
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-config
+  namespace: togglemaster
+data:
+  # Estes valores serão atualizados após o Terraform apply
+  sqs-url: "https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/togglemaster-dev-events"
+  dynamodb-table: "ToggleMasterAnalytics"
+  aws-region: "us-east-1"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-urls
+  namespace: togglemaster
+data:
+  auth-service-url: "http://auth-service:8001"
+  flag-service-url: "http://flag-service:8002"
+  targeting-service-url: "http://targeting-service:8003"
+  evaluation-service-url: "http://evaluation-service:8004"
+  analytics-service-url: "http://analytics-service:8005"

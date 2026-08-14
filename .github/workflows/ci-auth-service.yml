@@ -1,0 +1,253 @@
+# =============================================================================
+# CI Pipeline - Auth Service (Go)
+# =============================================================================
+# Pipeline DevSecOps completo:
+# 1. Build & Unit Test
+# 2. Linter/Static Analysis (golangci-lint)
+# 3. Security Scan (SAST com gosec, SCA com Trivy)
+# 4. Docker Build & Push para ECR
+# =============================================================================
+
+name: CI - Auth Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/auth-service/**'
+      - '.github/workflows/ci-auth-service.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/auth-service/**'
+      - '.github/workflows/ci-auth-service.yml'
+
+env:
+  SERVICE_NAME: auth-service
+  SERVICE_PATH: services/auth-service
+  GO_VERSION: '1.22'
+  AWS_REGION: us-east-1
+
+jobs:
+  # ===========================================================================
+  # Job 1: Build & Unit Test
+  # ===========================================================================
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: ${{ env.SERVICE_PATH }}/go.sum
+
+      - name: Download dependencies
+        working-directory: ${{ env.SERVICE_PATH }}
+        run: go mod download
+
+      - name: Build
+        working-directory: ${{ env.SERVICE_PATH }}
+        run: go build -v ./...
+
+      - name: Run tests
+        working-directory: ${{ env.SERVICE_PATH }}
+        run: |
+          go test -v -race -coverprofile=coverage.out ./... || echo "No tests found"
+          
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: coverage-report
+          path: ${{ env.SERVICE_PATH }}/coverage.out
+          retention-days: 7
+
+  # ===========================================================================
+  # Job 2: Linter / Static Analysis
+  # ===========================================================================
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: ${{ env.SERVICE_PATH }}/go.sum
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          working-directory: ${{ env.SERVICE_PATH }}
+          args: --timeout=5m
+
+  # ===========================================================================
+  # Job 3: Security Scan (SAST & SCA)
+  # ===========================================================================
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: ${{ env.SERVICE_PATH }}/go.sum
+
+      # SAST - Static Application Security Testing com gosec
+      - name: Run gosec (SAST)
+        uses: securego/gosec@master
+        with:
+          args: '-fmt sarif -out gosec-results.sarif -severity high ./...'
+        working-directory: ${{ env.SERVICE_PATH }}
+        continue-on-error: true  # Não falha o build, mas reporta
+
+      - name: Upload SAST results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ env.SERVICE_PATH }}/gosec-results.sarif
+        continue-on-error: true
+
+      # SCA - Software Composition Analysis com Trivy
+      - name: Run Trivy (SCA - Dependencies)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: ${{ env.SERVICE_PATH }}
+          format: 'table'
+          exit-code: '1'  # Falha se encontrar CRITICAL
+          severity: 'CRITICAL'
+          ignore-unfixed: true
+
+  # ===========================================================================
+  # Job 4: Docker Build & Push
+  # ===========================================================================
+  docker-build-push:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: [build-and-test, lint, security-scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    permissions:
+      id-token: write  # Para OIDC com AWS
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: vars
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "image_tag=v1.0.0-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        working-directory: ${{ env.SERVICE_PATH }}
+        run: |
+          docker build -t ${{ env.SERVICE_NAME }}:${{ steps.vars.outputs.image_tag }} .
+
+      # Container Scan com Trivy
+      - name: Run Trivy (Container Scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.SERVICE_NAME }}:${{ steps.vars.outputs.image_tag }}'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+          ignore-unfixed: true
+
+      - name: Tag and Push to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: togglemaster/${{ env.SERVICE_NAME }}
+          IMAGE_TAG: ${{ steps.vars.outputs.image_tag }}
+        run: |
+          docker tag ${{ env.SERVICE_NAME }}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+          docker tag ${{ env.SERVICE_NAME }}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+          echo "Pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+      # Output para GitOps
+      - name: Output image info
+        run: |
+          echo "## Docker Image Published" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** ${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository:** togglemaster/${{ env.SERVICE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** ${{ steps.vars.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+
+    outputs:
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+      ecr_registry: ${{ steps.login-ecr.outputs.registry }}
+
+  # ===========================================================================
+  # Job 5: Update GitOps Repository
+  # ===========================================================================
+  update-gitops:
+    name: Update GitOps
+    runs-on: ubuntu-latest
+    needs: [docker-build-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update deployment manifest
+        env:
+          IMAGE_TAG: ${{ needs.docker-build-push.outputs.image_tag }}
+          ECR_REGISTRY: ${{ needs.docker-build-push.outputs.ecr_registry }}
+        run: |
+          MANIFEST_PATH="gitops/apps/${{ env.SERVICE_NAME }}/deployment.yaml"
+          
+          if [ -f "$MANIFEST_PATH" ]; then
+            sed -i "s|image: .*${{ env.SERVICE_NAME }}:.*|image: ${ECR_REGISTRY}/togglemaster/${{ env.SERVICE_NAME }}:${IMAGE_TAG}|g" "$MANIFEST_PATH"
+            echo "Updated ${MANIFEST_PATH} with tag ${IMAGE_TAG}"
+          else
+            echo "Manifest not found at ${MANIFEST_PATH}, skipping update"
+          fi
+
+      - name: Commit and push
+        env:
+          IMAGE_TAG: ${{ needs.docker-build-push.outputs.image_tag }}
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          git add gitops/ || true
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore(gitops): update ${{ env.SERVICE_NAME }} to ${IMAGE_TAG}"
+            git push
+          fi

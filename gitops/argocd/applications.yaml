@@ -1,0 +1,140 @@
+# =============================================================================
+# ArgoCD Applications - ToggleMaster
+# =============================================================================
+# Este arquivo configura o ArgoCD para monitorar e sincronizar
+# os 5 microsserviços do ToggleMaster
+# =============================================================================
+
+# App of Apps pattern - Application principal
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: togglemaster
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    targetRevision: main
+    path: gitops/base
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+# Auth Service
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: auth-service
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: togglemaster
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    targetRevision: main
+    path: gitops/apps/auth-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# Flag Service
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flag-service
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: togglemaster
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    targetRevision: main
+    path: gitops/apps/flag-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# Targeting Service
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: targeting-service
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: togglemaster
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    targetRevision: main
+    path: gitops/apps/targeting-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# Evaluation Service
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: evaluation-service
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: togglemaster
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    targetRevision: main
+    path: gitops/apps/evaluation-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# Analytics Service
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: analytics-service
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: togglemaster
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    targetRevision: main
+    path: gitops/apps/analytics-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

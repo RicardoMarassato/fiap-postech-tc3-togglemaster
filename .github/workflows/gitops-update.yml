@@ -1,0 +1,94 @@
+# =============================================================================
+# GitOps Update - Atualiza manifestos K8s com nova tag de imagem
+# =============================================================================
+# Este workflow é chamado após o push bem-sucedido de uma imagem no ECR.
+# Ele atualiza o arquivo de deployment no repositório GitOps com a nova tag.
+# O ArgoCD então detecta a mudança e sincroniza automaticamente.
+# =============================================================================
+
+name: GitOps Update
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: 'Nome do serviço (ex: flag-service)'
+        required: true
+        type: string
+      image_tag:
+        description: 'Tag da imagem Docker (ex: v1.0.0-a1b2c3d)'
+        required: true
+        type: string
+      ecr_registry:
+        description: 'URL do registry ECR'
+        required: true
+        type: string
+    secrets:
+      GITOPS_PAT:
+        description: 'Personal Access Token para push no repo GitOps'
+        required: true
+
+jobs:
+  update-gitops:
+    name: Update GitOps Manifests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v4
+        with:
+          # Se usar repo separado para GitOps, altere aqui:
+          # repository: seu-org/togglemaster-gitops
+          # token: ${{ secrets.GITOPS_PAT }}
+          token: ${{ secrets.GITOPS_PAT || secrets.GITHUB_TOKEN }}
+          ref: main
+
+      - name: Update deployment manifest
+        run: |
+          SERVICE=${{ inputs.service_name }}
+          TAG=${{ inputs.image_tag }}
+          REGISTRY=${{ inputs.ecr_registry }}
+          
+          MANIFEST_PATH="gitops/apps/${SERVICE}/deployment.yaml"
+          
+          if [ -f "$MANIFEST_PATH" ]; then
+            # Atualiza a tag da imagem no deployment
+            sed -i "s|image: .*${SERVICE}:.*|image: ${REGISTRY}/togglemaster/${SERVICE}:${TAG}|g" "$MANIFEST_PATH"
+            echo "Updated ${MANIFEST_PATH} with tag ${TAG}"
+            cat "$MANIFEST_PATH"
+          else
+            echo "Warning: Manifest not found at ${MANIFEST_PATH}"
+            exit 0  # Não falha se o manifest ainda não existe
+          fi
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          SERVICE=${{ inputs.service_name }}
+          TAG=${{ inputs.image_tag }}
+          
+          git add gitops/
+          
+          # Só commita se houver mudanças
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore(gitops): update ${SERVICE} to ${TAG}
+
+            Automated update from CI pipeline.
+            Commit: ${{ github.sha }}
+            Workflow: ${{ github.workflow }}"
+            
+            git push
+            echo "Changes pushed to GitOps repo"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## GitOps Update Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service:** ${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **New Tag:** ${{ inputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ArgoCD will sync automatically**" >> $GITHUB_STEP_SUMMARY

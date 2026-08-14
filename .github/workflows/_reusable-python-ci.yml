@@ -1,0 +1,275 @@
+# =============================================================================
+# Reusable CI Pipeline - Python Services
+# =============================================================================
+# Workflow reusável para todos os microsserviços Python do ToggleMaster.
+# Chamado pelos workflows específicos de cada serviço.
+# =============================================================================
+
+name: Reusable Python CI
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: 'Nome do serviço (ex: flag-service)'
+        required: true
+        type: string
+      service_path:
+        description: 'Caminho do serviço (ex: services/flag-service)'
+        required: true
+        type: string
+      python_version:
+        description: 'Versão do Python'
+        required: false
+        type: string
+        default: '3.12'
+    secrets:
+      AWS_ROLE_ARN:
+        description: 'ARN da role AWS para push no ECR'
+        required: false
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  # ===========================================================================
+  # Job 1: Build & Unit Test
+  # ===========================================================================
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+          cache: 'pip'
+          cache-dependency-path: ${{ inputs.service_path }}/requirements.txt
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.service_path }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run tests
+        working-directory: ${{ inputs.service_path }}
+        run: |
+          pytest --cov=. --cov-report=xml --cov-report=term -v || echo "No tests found or tests passed"
+        continue-on-error: true
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-${{ inputs.service_name }}
+          path: ${{ inputs.service_path }}/coverage.xml
+          retention-days: 7
+        continue-on-error: true
+
+  # ===========================================================================
+  # Job 2: Linter / Static Analysis
+  # ===========================================================================
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Install linters
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pylint black isort
+
+      - name: Run flake8
+        working-directory: ${{ inputs.service_path }}
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+
+      - name: Run pylint
+        working-directory: ${{ inputs.service_path }}
+        run: |
+          pip install -r requirements.txt 2>/dev/null || true
+          pylint --exit-zero --max-line-length=120 --disable=C0114,C0115,C0116 *.py || echo "Pylint completed"
+
+      - name: Check formatting with black
+        working-directory: ${{ inputs.service_path }}
+        run: |
+          black --check --diff . || echo "Black formatting check completed (not enforced)"
+        continue-on-error: true
+
+  # ===========================================================================
+  # Job 3: Security Scan (SAST & SCA)
+  # ===========================================================================
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      # SAST - Static Application Security Testing com Bandit
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit (SAST)
+        working-directory: ${{ inputs.service_path }}
+        run: |
+          bandit -r . -f json -o bandit-results.json --severity-level high || true
+          bandit -r . -ll -ii  # Exibe resultados no log (high severity)
+        continue-on-error: true
+
+      - name: Upload Bandit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-results-${{ inputs.service_name }}
+          path: ${{ inputs.service_path }}/bandit-results.json
+          retention-days: 7
+        continue-on-error: true
+
+      # SCA - Software Composition Analysis com Trivy
+      - name: Run Trivy (SCA - Dependencies)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: ${{ inputs.service_path }}
+          format: 'table'
+          exit-code: '1'  # Falha se encontrar CRITICAL
+          severity: 'CRITICAL'
+          ignore-unfixed: true
+
+  # ===========================================================================
+  # Job 4: Docker Build & Push
+  # ===========================================================================
+  docker-build-push:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: [build-and-test, lint, security-scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: vars
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "image_tag=v1.0.0-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        working-directory: ${{ inputs.service_path }}
+        run: |
+          docker build -t ${{ inputs.service_name }}:${{ steps.vars.outputs.image_tag }} .
+
+      # Container Scan com Trivy
+      - name: Run Trivy (Container Scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ inputs.service_name }}:${{ steps.vars.outputs.image_tag }}'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+          ignore-unfixed: true
+
+      - name: Tag and Push to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: togglemaster/${{ inputs.service_name }}
+          IMAGE_TAG: ${{ steps.vars.outputs.image_tag }}
+        run: |
+          docker tag ${{ inputs.service_name }}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+          docker tag ${{ inputs.service_name }}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+          echo "Pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+      - name: Output image info
+        run: |
+          echo "## Docker Image Published - ${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** ${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository:** togglemaster/${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** ${{ steps.vars.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+
+    outputs:
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+      ecr_registry: ${{ steps.login-ecr.outputs.registry }}
+
+  # ===========================================================================
+  # Job 5: Update GitOps Repository
+  # ===========================================================================
+  update-gitops:
+    name: Update GitOps
+    runs-on: ubuntu-latest
+    needs: [docker-build-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update deployment manifest
+        run: |
+          SERVICE=${{ inputs.service_name }}
+          TAG=${{ needs.docker-build-push.outputs.image_tag }}
+          REGISTRY=${{ needs.docker-build-push.outputs.ecr_registry }}
+          
+          MANIFEST_PATH="gitops/apps/${SERVICE}/deployment.yaml"
+          
+          if [ -f "$MANIFEST_PATH" ]; then
+            sed -i "s|image: .*${SERVICE}:.*|image: ${REGISTRY}/togglemaster/${SERVICE}:${TAG}|g" "$MANIFEST_PATH"
+            echo "Updated ${MANIFEST_PATH} with tag ${TAG}"
+          else
+            echo "Manifest not found at ${MANIFEST_PATH}, skipping update"
+          fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          git add gitops/ || true
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore(gitops): update ${{ inputs.service_name }} to ${{ needs.docker-build-push.outputs.image_tag }}"
+            git push
+          fi

@@ -1,3 +1,41 @@
+# Python
 venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment
 .env
+.env.*
+!.env.example
+
+# Notes
 notes.txt
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

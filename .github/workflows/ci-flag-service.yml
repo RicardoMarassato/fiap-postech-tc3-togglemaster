@@ -1,0 +1,30 @@
+# =============================================================================
+# CI Pipeline - Flag Service (Python)
+# =============================================================================
+
+name: CI - Flag Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/flag-service/**'
+      - '.github/workflows/ci-flag-service.yml'
+      - '.github/workflows/_reusable-python-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/flag-service/**'
+      - '.github/workflows/ci-flag-service.yml'
+      - '.github/workflows/_reusable-python-ci.yml'
+
+jobs:
+  ci:
+    name: Flag Service CI
+    uses: ./.github/workflows/_reusable-python-ci.yml
+    with:
+      service_name: flag-service
+      service_path: services/flag-service
+      python_version: '3.12'
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}

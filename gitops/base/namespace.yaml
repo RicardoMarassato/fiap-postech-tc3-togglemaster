@@ -1,0 +1,10 @@
+# =============================================================================
+# Namespace ToggleMaster
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: togglemaster
+  labels:
+    app.kubernetes.io/name: togglemaster
+    app.kubernetes.io/managed-by: argocd
