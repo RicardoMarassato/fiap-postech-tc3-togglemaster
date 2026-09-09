@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: evaluation-service
-          image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/togglemaster/evaluation-service:latest
+          image: 504636433271.dkr.ecr.us-east-1.amazonaws.com/togglemaster/evaluation-service:latest
           ports:
             - containerPort: 8004
               name: http

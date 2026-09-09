@@ -46,12 +46,12 @@ output "dlq_name" {
 output "sqs_config" {
   description = "Configuração completa da fila para uso na aplicação"
   value = {
-    url                 = aws_sqs_queue.main.url
-    arn                 = aws_sqs_queue.main.arn
-    name                = aws_sqs_queue.main.name
-    visibility_timeout  = var.visibility_timeout_seconds
-    message_retention   = var.message_retention_seconds
-    dlq_url             = var.enable_dlq ? aws_sqs_queue.dlq[0].url : null
-    max_receive_count   = var.max_receive_count
+    url                = aws_sqs_queue.main.url
+    arn                = aws_sqs_queue.main.arn
+    name               = aws_sqs_queue.main.name
+    visibility_timeout = var.visibility_timeout_seconds
+    message_retention  = var.message_retention_seconds
+    dlq_url            = var.enable_dlq ? aws_sqs_queue.dlq[0].url : null
+    max_receive_count  = var.max_receive_count
   }
 }

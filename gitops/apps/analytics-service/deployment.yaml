@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: analytics-service
-          image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/togglemaster/analytics-service:latest
+          image: 504636433271.dkr.ecr.us-east-1.amazonaws.com/togglemaster/analytics-service:latest
           ports:
             - containerPort: 8005
               name: http

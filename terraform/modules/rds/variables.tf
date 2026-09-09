@@ -30,9 +30,9 @@ variable "allowed_security_group_ids" {
 variable "databases" {
   description = "Lista de bancos de dados a serem criados"
   type = list(object({
-    name        = string  # Identificador único (ex: auth, flags, targeting)
-    db_name     = string  # Nome do database
-    username    = string  # Usuário admin
+    name     = string # Identificador único (ex: auth, flags, targeting)
+    db_name  = string # Nome do database
+    username = string # Usuário admin
   }))
   default = [
     { name = "auth", db_name = "auth_db", username = "auth_admin" },
@@ -66,7 +66,7 @@ variable "max_allocated_storage" {
 variable "engine_version" {
   description = "Versão do PostgreSQL"
   type        = string
-  default     = "16.3"
+  default     = "18.3-R2"
 }
 
 variable "multi_az" {
@@ -90,7 +90,7 @@ variable "deletion_protection" {
 variable "skip_final_snapshot" {
   description = "Pular snapshot final ao deletar"
   type        = bool
-  default     = true  # true para dev, false para prod
+  default     = true # true para dev, false para prod
 }
 
 variable "backup_retention_period" {

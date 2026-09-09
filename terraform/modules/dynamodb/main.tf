@@ -19,7 +19,7 @@ resource "aws_dynamodb_table" "analytics" {
 
   attribute {
     name = "id"
-    type = "S"  # String
+    type = "S" # String
   }
 
   # Atributos para GSI (Global Secondary Index)

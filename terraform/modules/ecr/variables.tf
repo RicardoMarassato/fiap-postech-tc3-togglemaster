@@ -43,7 +43,7 @@ variable "scan_on_push" {
 variable "force_delete" {
   description = "Permite deletar repositório mesmo com imagens"
   type        = bool
-  default     = false  # Proteção para prod
+  default     = false # Proteção para prod
 }
 
 # =============================================================================

@@ -60,12 +60,12 @@ output "secrets_names" {
 output "connection_info" {
   description = "Informações de conexão para os microsserviços"
   value = {
-    for name, db in var.databases : name => {
-      host     = aws_db_instance.databases[name].address
+    for db in var.databases : db.name => {
+      host     = aws_db_instance.databases[db.name].address
       port     = 5432
       database = db.db_name
       username = db.username
-      secret   = aws_secretsmanager_secret.db_credentials[name].name
+      secret   = aws_secretsmanager_secret.db_credentials[db.name].name
     }
   }
 }

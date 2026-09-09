@@ -10,8 +10,8 @@ echo "=== Instalando ArgoCD ==="
 # Criar namespace
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
-# Instalar ArgoCD
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# Instalar ArgoCD usando Server-Side Apply (necessário para CRDs grandes)
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 echo "Aguardando pods do ArgoCD ficarem prontos..."
 kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd

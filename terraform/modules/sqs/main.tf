@@ -39,13 +39,10 @@ resource "aws_sqs_queue" "main" {
   sqs_managed_sse_enabled = var.sqs_managed_sse_enabled
 
   # Redrive policy (DLQ)
-  dynamic "redrive_policy" {
-    for_each = var.enable_dlq ? [1] : []
-    content {
-      deadLetterTargetArn = aws_sqs_queue.dlq[0].arn
-      maxReceiveCount     = var.max_receive_count
-    }
-  }
+  redrive_policy = var.enable_dlq ? jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.dlq[0].arn
+    maxReceiveCount     = var.max_receive_count
+  }) : null
 
   tags = {
     Name = "${var.name_prefix}-${var.queue_name}"
@@ -78,7 +75,7 @@ resource "aws_cloudwatch_metric_alarm" "dlq_messages" {
   evaluation_periods  = 1
   metric_name         = "ApproximateNumberOfMessagesVisible"
   namespace           = "AWS/SQS"
-  period              = 300  # 5 minutos
+  period              = 300 # 5 minutos
   statistic           = "Sum"
   threshold           = 0
   alarm_description   = "Alarme quando há mensagens na DLQ do ${var.queue_name}"

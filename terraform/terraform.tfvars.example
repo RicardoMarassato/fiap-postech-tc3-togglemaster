@@ -10,7 +10,7 @@
 # -----------------------------------------------------------------------------
 aws_region   = "us-east-1"
 project_name = "togglemaster"
-environment  = "dev"  # dev, staging, prod
+environment  = "prod"  # dev, staging, prod
 
 # -----------------------------------------------------------------------------
 # AWS Academy LabRole
@@ -34,7 +34,7 @@ private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
 # -----------------------------------------------------------------------------
 # EKS
 # -----------------------------------------------------------------------------
-eks_cluster_version     = "1.29"
+eks_cluster_version     = "1.31"
 eks_node_instance_types = ["t3.medium"]
 eks_node_desired_size   = 2
 eks_node_min_size       = 1
@@ -45,7 +45,7 @@ eks_node_max_size       = 4
 # -----------------------------------------------------------------------------
 rds_instance_class    = "db.t3.micro"
 rds_allocated_storage = 20
-rds_engine_version    = "16.3"
+rds_engine_version    = "18.3"
 rds_multi_az          = false  # true para produção
 
 # -----------------------------------------------------------------------------

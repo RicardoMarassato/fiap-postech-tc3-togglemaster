@@ -7,7 +7,7 @@ Código Terraform para provisionar toda a infraestrutura do ToggleMaster na AWS.
 | Recurso | Descrição |
 |---------|-----------|
 | **VPC** | VPC com subnets públicas e privadas em 2 AZs |
-| **EKS** | Cluster Kubernetes 1.29 com Node Group |
+| **EKS** | Cluster Kubernetes 1.31 com Node Group |
 | **RDS** | 3 instâncias PostgreSQL 16 (auth, flags, targeting) |
 | **ElastiCache** | Cluster Redis 7.1 |
 | **DynamoDB** | Tabela ToggleMasterAnalytics |
@@ -74,7 +74,7 @@ Para usar com conta pessoal, altere no `terraform.tfvars`:
 
 ```hcl
 use_lab_role = false
-lab_role_arn = "arn:aws:iam::SEU_ACCOUNT_ID:role/SuaRole"
+lab_role_arn = "arn:aws:iam::SEU_504636433271:role/SuaRole"
 ```
 
 ## Configurar kubectl após deploy
@@ -82,7 +82,7 @@ lab_role_arn = "arn:aws:iam::SEU_ACCOUNT_ID:role/SuaRole"
 Após o `terraform apply`, execute:
 
 ```bash
-aws eks update-kubeconfig --region us-east-1 --name togglemaster-dev-eks
+aws eks update-kubeconfig --region us-east-1 --name togglemaster-prod-eks
 ```
 
 Ou use o output do Terraform:

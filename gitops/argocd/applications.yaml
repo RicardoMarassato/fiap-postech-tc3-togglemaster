@@ -16,7 +16,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    repoURL: https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster.git
     targetRevision: main
     path: gitops/base
   destination:
@@ -40,7 +40,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    repoURL: https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster.git
     targetRevision: main
     path: gitops/apps/auth-service
   destination:
@@ -62,7 +62,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    repoURL: https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster.git
     targetRevision: main
     path: gitops/apps/flag-service
   destination:
@@ -84,7 +84,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    repoURL: https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster.git
     targetRevision: main
     path: gitops/apps/targeting-service
   destination:
@@ -106,7 +106,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    repoURL: https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster.git
     targetRevision: main
     path: gitops/apps/evaluation-service
   destination:
@@ -128,7 +128,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git
+    repoURL: https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster.git
     targetRevision: main
     path: gitops/apps/analytics-service
   destination:

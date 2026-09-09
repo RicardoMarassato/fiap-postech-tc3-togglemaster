@@ -1,0 +1,73 @@
+===================================================================
+TOGGLEMASTER V3 - CHECKLIST & ROTEIRO RÁPIDO PARA O VÍDEO (DEMO)
+===================================================================
+
+1. PARTE TERRAFORM (IAC - COMANDOS TERMINAL / CLOUDSHELL)
+-------------------------------------------------------------------
+# Acessar diretório do Terraform
+cd terraform
+
+# 1. Validar sintaxe dos módulos
+terraform validate
+
+# 2. Executar o plano de execução (mostrar recursos a serem criados)
+terraform plan
+
+# 3. Aplicar infraestrutura (se tiver créditos ativos)
+terraform apply -auto-approve
+
+
+2. PARTE DEVSECOPS (DEMONSTRAÇÃO DE BLOQUEIO NO GITHUB ACTIONS)
+-------------------------------------------------------------------
+# Passo A: Inserir dependência vulnerável de propósito
+# Editar services/flag-service/requirements.txt e adicionar:
+# requests==2.25.0
+
+# Fazer commit e push em branch de teste ou na main:
+git add services/flag-service/requirements.txt
+git commit -m "test: simulate critical CVE vulnerability"
+git push
+
+# Mostrar na tela do navegador:
+[ ] GitHub Actions -> Workflow "CI - Flag Service" -> Job "Security Scan"
+[ ] Mostrar o passo "Run Trivy (SCA - Dependencies)" FALHANDO com código 1 (exit-code 1)
+[ ] Explicar: "O gate de DevSecOps bloqueou o avanço para build e publicação da imagem!"
+
+# Passo B: Corrigir a vulnerabilidade
+# Remover a linha requests==2.25.0 de services/flag-service/requirements.txt
+git add services/flag-service/requirements.txt
+git commit -m "fix: remove vulnerable dependency"
+git push
+
+# Mostrar na tela do navegador:
+[ ] Workflow executando e PASSANDO em todos os estágios!
+[ ] Imagem publicada no ECR com tag v1.0.0-<commit_sha>
+[ ] Job update-gitops atualizando gitops/apps/flag-service/deployment.yaml
+
+
+3. PARTE GITOPS & ARGOCD (SINCRONIZAÇÃO AUTOMÁTICA NO EKS)
+-------------------------------------------------------------------
+# Conectar o kubectl ao cluster EKS:
+aws eks update-kubeconfig --region us-east-1 --name togglemaster-prod-eks
+
+# Abrir o port-forward da UI do ArgoCD:
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# Obter a senha do admin:
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+
+# Mostrar no navegador (https://localhost:8080):
+[ ] Painel com as 5 aplicações (auth, flag, targeting, evaluation, analytics)
+[ ] Mostrar a aplicação 'flag-service' sincronizando a nova tag gerada no GitOps
+[ ] Mostrar os pods atualizados no cluster:
+kubectl get pods -n togglemaster
+
+
+4. PARTE DESTROY AUTOMATIZADO (ECONOMIA DE CRÉDITOS)
+-------------------------------------------------------------------
+# Mostrar no GitHub Actions:
+[ ] Aba Actions -> Workflow "Terraform" -> Run workflow
+[ ] Selecionar ação: "destroy"
+[ ] Campo de confirmação: digitar "DESTROY"
+[ ] Explicar que a automação destrói todos os recursos após a aula para poupar custos
+===================================================================

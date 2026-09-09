@@ -14,7 +14,6 @@
 
 locals {
   cluster_name = "${var.project_name}-${var.environment}-eks"
-  name_prefix  = "${var.project_name}-${var.environment}"
 }
 
 # =============================================================================
@@ -29,7 +28,7 @@ module "networking" {
   public_subnet_cidrs  = var.public_subnet_cidrs
   private_subnet_cidrs = var.private_subnet_cidrs
   cluster_name         = local.cluster_name
-  enable_nat_gateway   = true  # Necessário para nodes privados acessarem ECR
+  enable_nat_gateway   = true # Necessário para nodes privados acessarem ECR
 }
 
 # =============================================================================
@@ -44,7 +43,7 @@ module "eks" {
 
   vpc_id          = module.networking.vpc_id
   subnet_ids      = concat(module.networking.public_subnet_ids, module.networking.private_subnet_ids)
-  node_subnet_ids = module.networking.private_subnet_ids  # Nodes em subnets privadas
+  node_subnet_ids = module.networking.private_subnet_ids # Nodes em subnets privadas
 
   # AWS Academy - usar LabRole
   use_lab_role = var.use_lab_role
@@ -79,6 +78,7 @@ module "rds" {
   multi_az          = var.rds_multi_az
 
   # Bancos de dados: auth, flags, targeting
+  # 3 DBs - 3 instâncias
   databases = [
     { name = "auth", db_name = "auth_db", username = "auth_admin" },
     { name = "flags", db_name = "flags_db", username = "flags_admin" },
@@ -136,7 +136,7 @@ module "sqs" {
 
   # Configuração
   visibility_timeout_seconds = 60
-  message_retention_seconds  = 345600  # 4 dias
+  message_retention_seconds  = 345600 # 4 dias
 
   # DLQ
   enable_dlq        = true

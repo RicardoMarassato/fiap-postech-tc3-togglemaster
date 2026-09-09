@@ -1,350 +1,125 @@
-# ToggleMaster V3 - Entrega da Fase 3 (IaC, CI/CD & GitOps)
+# ToggleMaster V3 🚀
 
-Este projeto evolui a infraestrutura do ToggleMaster (da Fase 2) para um modelo **"Se não está no código, não existe"**: toda a infraestrutura é provisionada via Terraform, os deploys passam por pipelines DevSecOps automatizados, e o Kubernetes é gerenciado via GitOps com ArgoCD.
+> FIAP Postech - DevOps & Cloud Architecture (Tech Challenge - Fase 3)
 
----
-
-## Informações da Entrega
-
-- **Aluno:** Ricardo Marassato
-- **RM:** 370358
-- **Discord:** marassato7700
-- **Repositório GitHub:** https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster
-- **Link do Vídeo (Demonstração):** `[PREENCHER APÓS GRAVAÇÃO]`
+O **ToggleMaster V3** representa a evolução definitiva da arquitetura de microsserviços para o modelo **"Se não está no código, não existe"**. Toda a infraestrutura na AWS é provisionada como código (**Terraform**), os deploys são governados por esteiras completas de **DevSecOps (GitHub Actions)** com gates automáticos de segurança, e a entrega contínua é orquestrada via **GitOps com ArgoCD** no Kubernetes (EKS).
 
 ---
 
-## O Problema da Fase 2
+## 📋 Informações de Entrega
 
-A arquitetura de microsserviços implementada na Fase 2 funcionava bem tecnicamente, mas a operação apresentava gaps significativos:
-
-- **Infraestrutura manual:** O cluster EKS, RDS, ElastiCache e DynamoDB foram criados via console AWS. Recriar o ambiente de homologação levava dias e era propenso a erros humanos.
-- **Deploys artesanais:** Desenvolvedores rodando `kubectl apply` de suas máquinas locais, gerando conflitos de versão e falta de rastreabilidade.
-- **Segurança reativa:** Vulnerabilidades em bibliotecas e imagens Docker passavam despercebidas para produção, sem nenhum gate de segurança automatizado.
-- **Credenciais expostas:** Secrets passados em arquivos de texto ou hardcoded nos manifestos.
-
----
-
-## Solução Implementada
-
-### 1. Infraestrutura como Código (Terraform)
-
-Toda a infraestrutura da Fase 2 foi codificada em módulos Terraform reutilizáveis:
-
-```
-terraform/
-├── main.tf                    # Orquestração dos módulos
-├── variables.tf               # Variáveis de configuração
-├── outputs.tf                 # Outputs para CI/CD e GitOps
-├── backend.tf                 # S3 remote state com locking nativo
-├── providers.tf               # Configuração do provider AWS
-├── versions.tf                # Versões do Terraform e providers
-├── data.tf                    # Data sources (LabRole, AZs)
-└── modules/
-    ├── networking/            # VPC, Subnets, IGW, NAT, Route Tables
-    ├── eks/                   # Cluster EKS + Node Groups (LabRole)
-    ├── rds/                   # 3x PostgreSQL + Secrets Manager
-    ├── elasticache/           # Redis 7.1
-    ├── dynamodb/              # ToggleMasterAnalytics (GSIs, TTL)
-    ├── sqs/                   # Fila principal + DLQ
-    └── ecr/                   # 5 repositórios de imagens
-```
-
-**Decisão AWS Academy:** Como não é possível criar IAM Roles no AWS Academy, o Terraform usa a `LabRole` existente via data source para o cluster EKS e Node Groups.
-
-### 2. Pipeline CI/CD com DevSecOps (GitHub Actions)
-
-Cada microsserviço tem um pipeline que roda automaticamente em PRs e pushes na main:
-
-| Estágio | Ferramentas | Descrição |
-|---------|-------------|-----------|
-| **Build & Test** | Go/Python | Compila e roda testes unitários (se existirem) |
-| **Lint** | golangci-lint, flake8, pylint | Análise estática de código |
-| **SAST** | gosec (Go), bandit (Python) | Vulnerabilidades no código fonte |
-| **SCA** | Trivy (fs mode) | Vulnerabilidades nas dependências |
-| **Container Scan** | Trivy (image mode) | Vulnerabilidades na imagem Docker |
-| **Push ECR** | AWS ECR | Imagem taggeada com SHA do commit |
-
-**Regra de Bloqueio:** Se uma vulnerabilidade **CRITICAL** for encontrada em qualquer scan, o pipeline falha e não prossegue para o push da imagem.
-
-### 3. GitOps com ArgoCD
-
-O deploy não é mais feito via CI diretamente no cluster. Adotamos o modelo GitOps:
-
-```
-gitops/
-├── argocd/
-│   ├── applications.yaml      # 5 aplicações configuradas
-│   └── install.sh             # Script de instalação do ArgoCD
-├── base/
-│   ├── namespace.yaml         # Namespace togglemaster
-│   ├── configmap.yaml         # Configurações compartilhadas
-│   └── secrets.yaml           # Template de secrets (valores em Secrets Manager)
-└── apps/
-    ├── auth-service/deployment.yaml
-    ├── flag-service/deployment.yaml
-    ├── targeting-service/deployment.yaml
-    ├── evaluation-service/deployment.yaml
-    └── analytics-service/deployment.yaml
-```
-
-**Fluxo de Deploy:**
-1. Pipeline CI builda e pusha imagem para ECR com tag `v1.0.0-<commit_sha>`
-2. Pipeline atualiza o `deployment.yaml` no repositório GitOps com a nova tag
-3. ArgoCD detecta a mudança e sincroniza automaticamente para o cluster EKS
+* **Aluno:** Ricardo Marassato
+* **RM:** 370358
+* **Discord:** marassato7700
+* **Repositório do GitHub:** [fiap-postech-tc3-togglemaster](https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster)
+* **Link do Vídeo de Demonstração:** [Vídeo de Demonstração (YouTube / Google Drive)](https://drive.google.com/) *(Preencher com o link da gravação)*
+* **Documentação Técnica Completa:** [Ricardo-Marassato-readme-tech-phase-3.md](Ricardo-Marassato-readme-tech-phase-3.md)
+* **Guia Didático da Arquitetura:** [GUIA_DIDATICO_JUNIOR.md](GUIA_DIDATICO_JUNIOR.md)
 
 ---
 
-## Diagrama da Arquitetura
+## 🛠️ Tecnologias Utilizadas
 
-Abaixo está o diagrama representativo da arquitetura DevOps do ToggleMaster V3:
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              GITHUB                                          │
-│  ┌──────────────┐    ┌──────────────────────────────┐    ┌──────────────┐   │
-│  │   PR/Push    │───▶│      CI Pipeline             │───▶│  ECR Push    │   │
-│  │   (Code)     │    │  (Build → SAST → SCA → Scan) │    │  (Image)     │   │
-│  └──────────────┘    └──────────────────────────────┘    └──────┬───────┘   │
-│                                                                  │           │
-│                      ┌───────────────────────────────────────────┘           │
-│                      ▼                                                       │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │  GitOps Repo: gitops/apps/<service>/deployment.yaml (tag atualizada) │   │
-│  └──────────────────────────────────┬───────────────────────────────────┘   │
-└─────────────────────────────────────│───────────────────────────────────────┘
-                                      │ Sync
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         AWS (Provisionado via Terraform)                     │
-│                                                                              │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                            VPC (10.0.0.0/16)                          │   │
-│  │  ┌─────────────────────┐         ┌─────────────────────┐             │   │
-│  │  │   Public Subnets    │         │   Private Subnets   │             │   │
-│  │  │   (NAT, ALB)        │         │   (EKS, RDS, Redis) │             │   │
-│  │  └─────────────────────┘         └─────────────────────┘             │   │
-│  │                                                                       │   │
-│  │  ┌────────────────────────────────────────────────────────────────┐  │   │
-│  │  │                     EKS Cluster (LabRole)                       │  │   │
-│  │  │                                                                  │  │   │
-│  │  │  ┌──────────────────────────────────────────────────────────┐  │  │   │
-│  │  │  │                 ArgoCD (GitOps Controller)                │  │  │   │
-│  │  │  └──────────────────────────────────────────────────────────┘  │  │   │
-│  │  │                              │                                  │  │   │
-│  │  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐  │  │   │
-│  │  │  │  auth   │ │  flag   │ │targeting│ │  eval   │ │analytics│  │  │   │
-│  │  │  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘  │  │   │
-│  │  └───────│───────────│───────────│───────────│───────────│────────┘  │   │
-│  │          │           │           │           │           │           │   │
-│  │  ┌───────▼───────────▼───────────▼───────────┼───────────┼───────┐  │   │
-│  │  │              RDS PostgreSQL (3x)          │           │       │  │   │
-│  │  │    auth_db      flags_db    targeting_db  │           │       │  │   │
-│  │  └───────────────────────────────────────────┘           │       │  │   │
-│  │                                              ┌───────────▼───┐   │  │   │
-│  │                                              │ ElastiCache   │   │  │   │
-│  │                                              │ Redis 7.1     │   │  │   │
-│  │                                              └───────────────┘   │  │   │
-│  │  ┌─────────────┐                            ┌────────────────┐   │  │   │
-│  │  │     SQS     │◄───────────────────────────│    DynamoDB    │   │  │   │
-│  │  │  + DLQ      │                            │   Analytics    │   │  │   │
-│  │  └─────────────┘                            └────────────────┘   │  │   │
-│  └──────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                           ECR (5 repositórios)                        │   │
-│  │   auth-service │ flag-service │ targeting │ evaluation │ analytics   │   │
-│  └──────────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+![Terraform](https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)
+![AWS EKS](https://img.shields.io/badge/AWS_EKS-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![ArgoCD](https://img.shields.io/badge/ArgoCD-EF7B4D?style=for-the-badge&logo=argo&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
+![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![DynamoDB](https://img.shields.io/badge/DynamoDB-4053D6?style=for-the-badge&logo=amazon-dynamodb&logoColor=white)
+![Trivy](https://img.shields.io/badge/Trivy-Security-blue?style=for-the-badge&logo=aquasec&logoColor=white)
 
 ---
 
-## Como Executar o Projeto
+## 🧩 Arquitetura da Solução & Pilares da Fase 3
 
-### Pré-requisitos
+O ecossistema integra os 5 microsserviços do ToggleMaster provisionados em nuvem através de práticas modernas de engenharia DevOps:
 
-- AWS CLI configurado com credenciais do AWS Academy
-- Terraform >= 1.5.0
-- kubectl
-- Docker (para build local)
+1. **Infraestrutura como Código (Terraform Modular):**
+   * **Networking:** VPC com Subnets Públicas e Privadas, Internet Gateway, NAT Gateway e Route Tables.
+   * **Cluster EKS:** Kubernetes gerenciado com Node Groups privados, integrado nativamente à `LabRole` (AWS Academy) ou roles customizadas.
+   * **Bancos de Dados:** 3 instâncias independentes de RDS PostgreSQL (`auth_db`, `flags_db`, `targeting_db`), 1 cluster ElastiCache Redis 7.1 e 1 tabela DynamoDB (`ToggleMasterAnalytics`).
+   * **Mensageria & Repositórios:** 1 fila SQS com Dead Letter Queue (DLQ) e 5 repositórios no AWS ECR com políticas de ciclo de vida.
+   * **Remote State:** Estado do Terraform armazenado em Bucket S3 com locking nativo (`use_lockfile`).
 
-### 1. Provisionar Infraestrutura (Terraform)
+2. **Pipeline DevSecOps (CI no GitHub Actions):**
+   * **Build & Unit Test:** Compilação e execução de testes unitários com geração de relatórios de cobertura.
+   * **Linter / Static Analysis:** Análise estática com `golangci-lint` (Go) e `flake8`/`pylint` (Python).
+   * **SAST & SCA:** Análise de vulnerabilidades em código com `gosec`/`bandit` e auditoria de dependências com `Trivy` (fs mode).
+   * **Container Security & ECR:** Varredura da imagem Docker com `Trivy` e publicação no ECR tagueada com o commit SHA (`v1.0.0-<hash>`).
+   * **Gate de Bloqueio:** Falha imediata do pipeline caso seja identificada vulnerabilidade **CRÍTICA**.
 
+3. **Entrega Contínua & GitOps (CD com ArgoCD):**
+   * **Repositório GitOps:** Manifestos organizados em padrão *App of Apps* (`gitops/argocd/applications.yaml`).
+   * **Atualização Automática:** Ao fim do CI, o manifesto `deployment.yaml` é atualizado no Git com a nova tag de imagem gerada.
+   * **Sincronização Contínua:** ArgoCD detecta a alteração no repositório e sincroniza automaticamente os pods no EKS (*self-healing* e *pruning* habilitados).
+   * **Ingress Controller:** Roteamento unificado via NGINX Ingress Controller com rewrite target para todos os 5 serviços.
+
+---
+
+## ⚡ Como Rodar e Testar
+
+### 1. Rodando Localmente (Docker Compose)
+Para desenvolvimento local com bancos e serviços integrados:
 ```bash
-# Criar bucket S3 para o state (apenas uma vez, antes do primeiro apply)
+cd services
+cp .env.example .env
+docker compose up -d --build
+```
+
+### 2. Provisionando a Infraestrutura na AWS (Terraform)
+```bash
+# 1. Criar o bucket de remote state no S3
 aws s3 mb s3://togglemaster-terraform-state --region us-east-1
 
-# Inicializar e aplicar
+# 2. Inicializar e aplicar o Terraform
 cd terraform
 terraform init
 terraform plan
 terraform apply
 ```
 
-### 2. Configurar kubectl para o EKS
-
+### 3. Configurando kubectl e ArgoCD
 ```bash
-aws eks update-kubeconfig --region us-east-1 --name togglemaster-dev-eks
-```
+# Atualizar kubeconfig
+aws eks update-kubeconfig --region us-east-1 --name togglemaster-prod-eks
 
-### 3. Instalar ArgoCD no Cluster
-
-```bash
+# Instalar o ArgoCD e aplicar as Applications do GitOps
 cd gitops/argocd
 chmod +x install.sh
 ./install.sh
-```
 
-### 4. Acessar a UI do ArgoCD
-
-```bash
-# Em um terminal, rode o port-forward
+# Acessar a UI do ArgoCD via port-forward
 kubectl port-forward svc/argocd-server -n argocd 8080:443
-
-# Em outro terminal, obtenha a senha inicial
+# Senha inicial do admin:
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 ```
 
-Acesse: https://localhost:8080 (usuário: `admin`, senha: output do comando acima)
+### 4. Testando a Regra de Bloqueio por Vulnerabilidade (DevSecOps)
+Para validar o gate de segurança do pipeline CI:
+1. Adicione uma dependência vulnerável conhecida no arquivo de dependências (ex: `requests==2.25.0` em `services/flag-service/requirements.txt`).
+2. Faça commit e push para o repositório.
+3. Observe o workflow do GitHub Actions falhar no passo de SCA do Trivy.
+4. Reverta a alteração e envie o commit: o pipeline passará com sucesso e liberará o push para o ECR.
 
----
+### 5. Destruindo a Infraestrutura (Economia de Créditos)
+Para evitar custos desnecessários no AWS Academy:
+* Execute o workflow **Terraform** no GitHub Actions selecionando a opção **destroy** e digitando `DESTROY` no campo de confirmação, ou execute localmente `terraform destroy -auto-approve`.
 
-## Estrutura dos Pipelines DevSecOps
-
+### 💡 Dica de Produtividade: Clonando os Repositórios da Organização
+Para clonar todos os 5 repositórios originais dos microsserviços via GitHub CLI:
+```bash
+python helpers/git-cloner.py
 ```
-.github/workflows/
-├── ci-auth-service.yml         # Go: golangci-lint, gosec, Trivy
-├── ci-flag-service.yml         # Python (usa workflow reusável)
-├── ci-targeting-service.yml    # Python (usa workflow reusável)
-├── ci-evaluation-service.yml   # Python (usa workflow reusável)
-├── ci-analytics-service.yml    # Python (usa workflow reusável)
-├── _reusable-python-ci.yml     # Workflow compartilhado para serviços Python
-└── terraform.yml               # Validação, apply e destroy do Terraform
-```
-
-### Destruindo a Infraestrutura (Economizar Créditos)
-
-Para destruir toda a infraestrutura e parar de consumir créditos do AWS Academy:
-
-1. Vá em **Actions** → **Terraform**
-2. Clique em **Run workflow**
-3. Selecione **destroy** no dropdown "Ação a executar"
-4. Digite `DESTROY` no campo de confirmação (obrigatório)
-5. Clique em **Run workflow**
-
-> **Segurança:** O pipeline exige que você digite exatamente "DESTROY" para confirmar. Se não digitar, o job falha sem tocar na AWS.
-
-### Testando o Bloqueio por Vulnerabilidade
-
-Para demonstrar que o pipeline bloqueia vulnerabilidades críticas:
-
-1. Adicione uma dependência vulnerável conhecida (ex: `requests==2.25.0` com CVE)
-2. Faça commit e push
-3. O pipeline falhará no estágio de SCA (Trivy) com saída não-zero
-4. Remova a dependência vulnerável e faça novo push
-5. O pipeline passará e a imagem será publicada no ECR
 
 ---
 
-## Desafios Enfrentados e Soluções
+## 📖 Relatório Técnico Completo de Entrega
 
-Durante a implementação da esteira de IaC e DevSecOps, surgiram alguns desafios específicos do ambiente AWS Academy:
+Toda a fundamentação técnica, arquitetura de rede, matriz DevSecOps, decisões de design para AWS Academy, desafios enfrentados, estimativa detalhada de custos e próximos passos estão documentados no relatório oficial:
 
-### 1. Limitações da LabRole no AWS Academy
-
-- **Desafio:** Não é possível criar IAM Roles ou Policies via Terraform no AWS Academy. Tentativas resultam em `AccessDenied`.
-
-- **Solução:** Configurei o Terraform para usar a `LabRole` existente via data source ao invés de criar roles customizadas:
-  ```hcl
-  data "aws_iam_role" "lab_role" {
-    name = "LabRole"
-  }
-  ```
-  Essa role é atribuída tanto ao cluster EKS quanto aos Node Groups, permitindo que funcionem com as permissões pré-configuradas do Academy.
-
-### 2. Remote State do Terraform (Locking)
-
-- **Desafio:** O `terraform.tfstate` não pode ficar local para trabalho em equipe, e criar tabela DynamoDB para locking falha por limitações de IAM.
-
-- **Solução:** Configurei backend S3 com `use_lockfile = true` (feature do Terraform 1.10+) que usa locking nativo via arquivo `.tflock` no próprio bucket, sem necessidade de DynamoDB:
-  ```hcl
-  terraform {
-    backend "s3" {
-      bucket       = "togglemaster-terraform-state"
-      key          = "togglemaster/terraform.tfstate"
-      region       = "us-east-1"
-      use_lockfile = true
-    }
-  }
-  ```
-
-### 3. Autenticação do GitHub Actions na AWS
-
-- **Desafio:** Não queria usar Access Keys estáticas nos secrets do GitHub por questões de segurança e rotação.
-
-- **Solução:** Configurei OIDC (OpenID Connect) entre GitHub e AWS. O workflow assume a role via federação:
-  ```yaml
-  - uses: aws-actions/configure-aws-credentials@v4
-    with:
-      role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-      aws-region: us-east-1
-  ```
-  Isso elimina a necessidade de credentials de longa duração e segue as melhores práticas de segurança.
-
-### 4. Serviços sem Testes Unitários
-
-- **Desafio:** Os microsserviços originais não possuem testes unitários implementados, mas o pipeline precisa ter um estágio de testes.
-
-- **Solução:** Configurei os pipelines para rodar os testes de forma condicional. Se não existir arquivo de testes ou o comando retornar vazio, o estágio passa com sucesso. Quando testes forem adicionados no futuro, serão executados automaticamente:
-  ```yaml
-  - name: Run tests
-    run: |
-      if [ -f "pytest.ini" ] || find . -name "test_*.py" | grep -q .; then
-        pytest -v --tb=short || true
-      else
-        echo "No tests found, skipping..."
-      fi
-  ```
-
----
-
-## Estimativa de Custos AWS
-
-| Recurso | Tipo | Custo/Hora | Custo/Mês (estimado) |
-|---------|------|------------|----------------------|
-| EKS Cluster | Control Plane | $0.10 | ~$73 |
-| EC2 (2x t3.medium) | Node Group | $0.08 | ~$60 |
-| RDS (3x db.t3.micro) | PostgreSQL | $0.05 | ~$38 |
-| ElastiCache (cache.t3.micro) | Redis | $0.02 | ~$15 |
-| NAT Gateway | Networking | $0.05 | ~$36 |
-| S3 + ECR | Storage | - | ~$5 |
-| **Total Estimado** | | | **~$227/mês** |
-
-> **Dica:** Destrua a infraestrutura quando não estiver usando (`terraform destroy`) para economizar créditos do Academy!
-
----
-
-## Próximos Passos (Melhorias Futuras)
-
-Para evoluir este ecossistema para um ambiente enterprise-ready, mapeei as seguintes melhorias:
-
-- **Terraform Workspaces:** Usar workspaces para gerenciar múltiplos ambientes (dev, staging, prod) com o mesmo código, apenas variando os valores.
-
-- **Policy as Code:** Integrar o OPA (Open Policy Agent) ou Checkov no pipeline de Terraform para validar compliance das configurações antes do apply.
-
-- **Secrets Management:** Migrar de Kubernetes Secrets para AWS Secrets Manager com External Secrets Operator, centralizando o gerenciamento de credenciais.
-
-- **Progressive Delivery:** Evoluir o ArgoCD para Argo Rollouts, habilitando deploys canary e blue-green com rollback automático baseado em métricas.
-
-- **Observabilidade do Pipeline:** Integrar métricas do GitHub Actions (tempo de build, taxa de falha) com Prometheus/Grafana para dashboards de DORA metrics.
-
----
-
-## Referências
-
-- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [GitHub Actions - AWS Credentials (OIDC)](https://github.com/aws-actions/configure-aws-credentials)
-- [Trivy - Vulnerability Scanner](https://aquasecurity.github.io/trivy/)
-- [ArgoCD - Declarative GitOps](https://argo-cd.readthedocs.io/)
-- [AWS EKS Best Practices](https://aws.github.io/aws-eks-best-practices/)
+👉 **[Documentação Técnica de Entrega - Fase 3](Ricardo-Marassato-readme-tech-phase-3.md)**

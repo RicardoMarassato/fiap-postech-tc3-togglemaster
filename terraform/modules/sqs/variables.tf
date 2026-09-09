@@ -26,13 +26,13 @@ variable "visibility_timeout_seconds" {
 variable "message_retention_seconds" {
   description = "Tempo de retenção de mensagens (segundos, max 14 dias = 1209600)"
   type        = number
-  default     = 345600  # 4 dias
+  default     = 345600 # 4 dias
 }
 
 variable "max_message_size" {
   description = "Tamanho máximo de mensagem (bytes, max 256KB)"
   type        = number
-  default     = 262144  # 256 KB
+  default     = 262144 # 256 KB
 }
 
 variable "delay_seconds" {
@@ -44,7 +44,7 @@ variable "delay_seconds" {
 variable "receive_wait_time_seconds" {
   description = "Tempo de espera para long polling (segundos)"
   type        = number
-  default     = 10  # Long polling habilitado
+  default     = 10 # Long polling habilitado
 }
 
 # =============================================================================
@@ -66,7 +66,7 @@ variable "max_receive_count" {
 variable "dlq_message_retention_seconds" {
   description = "Tempo de retenção de mensagens na DLQ (segundos)"
   type        = number
-  default     = 1209600  # 14 dias (máximo)
+  default     = 1209600 # 14 dias (máximo)
 }
 
 # =============================================================================

@@ -96,7 +96,7 @@ resource "aws_security_group_rule" "nodes_cluster_ingress_https" {
 resource "aws_eks_cluster" "main" {
   name     = var.cluster_name
   version  = var.cluster_version
-  role_arn = var.lab_role_arn  # Usa LabRole do AWS Academy
+  role_arn = var.lab_role_arn # Usa LabRole do AWS Academy
 
   vpc_config {
     security_group_ids      = [aws_security_group.eks_cluster.id]
@@ -124,7 +124,7 @@ resource "aws_eks_cluster" "main" {
 resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.name_prefix}-node-group"
-  node_role_arn   = var.lab_role_arn  # Usa LabRole do AWS Academy
+  node_role_arn   = var.lab_role_arn # Usa LabRole do AWS Academy
   subnet_ids      = var.node_subnet_ids
 
   instance_types = var.node_instance_types
@@ -144,7 +144,7 @@ resource "aws_eks_node_group" "main" {
   # Labels para os nodes
   labels = {
     "role"        = "worker"
-    "environment" = split("-", var.name_prefix)[1]  # Extrai o environment do name_prefix
+    "environment" = split("-", var.name_prefix)[1] # Extrai o environment do name_prefix
   }
 
   tags = {

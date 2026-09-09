@@ -32,22 +32,22 @@ resource "aws_db_subnet_group" "main" {
 # -----------------------------------------------------------------------------
 resource "aws_security_group" "rds" {
   name        = "${var.name_prefix}-rds-sg"
-  description = "Security group para instâncias RDS"
+  description = "Security group para instancias RDS"
   vpc_id      = var.vpc_id
 
   # Permite acesso PostgreSQL dos security groups especificados (EKS nodes)
   dynamic "ingress" {
     for_each = var.allowed_security_group_ids
     content {
-      from_port                = 5432
-      to_port                  = 5432
-      protocol                 = "tcp"
-      security_group_id        = ingress.value
-      description              = "PostgreSQL access from allowed security group"
+      from_port       = 5432
+      to_port         = 5432
+      protocol        = "tcp"
+      security_groups = [ingress.value]
+      description     = "PostgreSQL access from allowed security group"
     }
   }
 
-  # Permite acesso interno (entre instâncias RDS se necessário)
+  # Permite acesso interno (entre instancias RDS se necessário)
   ingress {
     from_port   = 5432
     to_port     = 5432
@@ -108,8 +108,8 @@ resource "aws_db_instance" "databases" {
   maintenance_window      = var.maintenance_window
 
   # Deletion
-  deletion_protection = var.deletion_protection
-  skip_final_snapshot = var.skip_final_snapshot
+  deletion_protection       = var.deletion_protection
+  skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.name_prefix}-${each.value.name}-final-snapshot"
 
   # Performance Insights (gratuito no t3.micro)
@@ -129,8 +129,8 @@ resource "aws_db_instance" "databases" {
 # -----------------------------------------------------------------------------
 resource "aws_db_parameter_group" "postgres" {
   name        = "${var.name_prefix}-postgres-params"
-  family      = "postgres16"
-  description = "Parameter group para PostgreSQL 16"
+  family      = "postgres${split(".", var.engine_version)[0]}"
+  description = "Parameter group para PostgreSQL ${split(".", var.engine_version)[0]}"
 
   # Configurações otimizadas
   parameter {
@@ -140,7 +140,7 @@ resource "aws_db_parameter_group" "postgres" {
 
   parameter {
     name  = "log_min_duration_statement"
-    value = "1000"  # Log queries > 1s
+    value = "1000" # Log queries > 1s
   }
 
   tags = {

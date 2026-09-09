@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: flag-service
-          image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/togglemaster/flag-service:latest
+          image: 504636433271.dkr.ecr.us-east-1.amazonaws.com/togglemaster/flag-service:latest
           ports:
             - containerPort: 8002
               name: http

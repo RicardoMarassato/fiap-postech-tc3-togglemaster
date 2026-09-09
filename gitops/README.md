@@ -58,7 +58,7 @@ Acesse: https://localhost:8080
 ### 3. Configurar repositório
 
 No ArgoCD, adicione o repositório:
-- **Repository URL**: `https://github.com/SEU_USUARIO/fiap-postech-tc3-togglemaster.git`
+- **Repository URL**: `https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster.git`
 - **Path**: `gitops/`
 
 ### 4. Aplicar Applications

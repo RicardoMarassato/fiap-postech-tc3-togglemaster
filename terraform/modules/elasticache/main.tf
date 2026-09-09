@@ -28,11 +28,11 @@ resource "aws_security_group" "redis" {
   dynamic "ingress" {
     for_each = var.allowed_security_group_ids
     content {
-      from_port                = 6379
-      to_port                  = 6379
-      protocol                 = "tcp"
-      security_group_id        = ingress.value
-      description              = "Redis access from allowed security group"
+      from_port       = 6379
+      to_port         = 6379
+      protocol        = "tcp"
+      security_groups = [ingress.value]
+      description     = "Redis access from allowed security group"
     }
   }
 
@@ -68,7 +68,7 @@ resource "aws_elasticache_parameter_group" "redis" {
   # Configurações otimizadas para feature flags
   parameter {
     name  = "maxmemory-policy"
-    value = "allkeys-lru"  # Remove chaves menos usadas quando memória cheia
+    value = "allkeys-lru" # Remove chaves menos usadas quando memória cheia
   }
 
   tags = {

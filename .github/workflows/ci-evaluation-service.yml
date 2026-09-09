@@ -1,5 +1,5 @@
 # =============================================================================
-# CI Pipeline - Evaluation Service (Python)
+# CI Pipeline - Evaluation Service (Go)
 # =============================================================================
 
 name: CI - Evaluation Service
@@ -10,21 +10,21 @@ on:
     paths:
       - 'services/evaluation-service/**'
       - '.github/workflows/ci-evaluation-service.yml'
-      - '.github/workflows/_reusable-python-ci.yml'
+      - '.github/workflows/_reusable-go-ci.yml'
   pull_request:
     branches: [main]
     paths:
       - 'services/evaluation-service/**'
       - '.github/workflows/ci-evaluation-service.yml'
-      - '.github/workflows/_reusable-python-ci.yml'
+      - '.github/workflows/_reusable-go-ci.yml'
 
 jobs:
   ci:
     name: Evaluation Service CI
-    uses: ./.github/workflows/_reusable-python-ci.yml
+    uses: ./.github/workflows/_reusable-go-ci.yml
     with:
       service_name: evaluation-service
       service_path: services/evaluation-service
-      python_version: '3.12'
+      go_version: '1.21'
     secrets:
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}

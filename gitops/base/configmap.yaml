@@ -8,7 +8,7 @@ metadata:
   namespace: togglemaster
 data:
   # Estes valores serão atualizados após o Terraform apply
-  sqs-url: "https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/togglemaster-dev-events"
+  sqs-url: "https://sqs.us-east-1.amazonaws.com/504636433271/togglemaster-prod-events"
   dynamodb-table: "ToggleMasterAnalytics"
   aws-region: "us-east-1"
 ---

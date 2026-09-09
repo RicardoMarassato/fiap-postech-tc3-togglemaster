@@ -137,7 +137,7 @@ terraform plan
 terraform apply  # só se tiver créditos
 
 # kubectl (se tiver cluster)
-aws eks update-kubeconfig --region us-east-1 --name togglemaster-dev-eks
+aws eks update-kubeconfig --region us-east-1 --name togglemaster-prod-eks
 kubectl get pods -n togglemaster
 
 # ArgoCD

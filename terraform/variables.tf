@@ -17,7 +17,7 @@ variable "project_name" {
 variable "environment" {
   description = "Ambiente (dev, staging, prod)"
   type        = string
-  default     = "dev"
+  default     = "prod"
 }
 
 # =============================================================================
@@ -27,13 +27,13 @@ variable "environment" {
 variable "lab_role_arn" {
   description = "ARN da LabRole do AWS Academy (obrigatório para Academy)"
   type        = string
-  default     = ""  # Será preenchido via terraform.tfvars ou variável de ambiente
+  default     = "" # Será preenchido via terraform.tfvars ou variável de ambiente
 }
 
 variable "use_lab_role" {
   description = "Se true, usa LabRole existente. Se false, cria roles (conta pessoal)"
   type        = bool
-  default     = true  # Default para AWS Academy
+  default     = true # Default para AWS Academy
 }
 
 # =============================================================================
@@ -71,7 +71,7 @@ variable "private_subnet_cidrs" {
 variable "eks_cluster_version" {
   description = "Versão do Kubernetes para o EKS"
   type        = string
-  default     = "1.29"
+  default     = "1.31"
 }
 
 variable "eks_node_instance_types" {
@@ -117,13 +117,13 @@ variable "rds_allocated_storage" {
 variable "rds_engine_version" {
   description = "Versão do PostgreSQL"
   type        = string
-  default     = "16.3"
+  default     = "18.3"
 }
 
 variable "rds_multi_az" {
   description = "Habilitar Multi-AZ para o RDS"
   type        = bool
-  default     = false  # false para economizar custos em dev
+  default     = false # false para economizar custos em dev
 }
 
 # =============================================================================

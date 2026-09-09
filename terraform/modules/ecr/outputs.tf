@@ -43,8 +43,8 @@ output "docker_login_command" {
 output "ecr_config" {
   description = "Configuração ECR para uso em CI/CD"
   value = {
-    registry    = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com"
-    region      = data.aws_region.current.name
+    registry = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com"
+    region   = data.aws_region.current.name
     repositories = {
       for name, repo in aws_ecr_repository.repos : name => {
         url  = repo.repository_url
