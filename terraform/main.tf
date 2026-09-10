@@ -69,7 +69,10 @@ module "rds" {
   subnet_ids  = module.networking.private_subnet_ids
 
   # Permitir acesso do EKS nodes
-  allowed_security_group_ids = [module.eks.node_security_group_id]
+  allowed_security_group_ids = [
+    module.eks.node_security_group_id,
+    module.eks.cluster_primary_security_group_id
+  ]
 
   # Configuração das instâncias
   instance_class    = var.rds_instance_class
@@ -99,7 +102,10 @@ module "elasticache" {
   subnet_ids  = module.networking.private_subnet_ids
 
   # Permitir acesso do EKS nodes
-  allowed_security_group_ids = [module.eks.node_security_group_id]
+  allowed_security_group_ids = [
+    module.eks.node_security_group_id,
+    module.eks.cluster_primary_security_group_id
+  ]
 
   # Configuração
   node_type       = var.redis_node_type
