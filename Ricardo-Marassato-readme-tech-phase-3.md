@@ -319,6 +319,22 @@ Durante o desenvolvimento da Fase 3, diversos obstáculos técnicos e limitaçõ
 * **Desafio:** Ao expor múltiplos microsserviços sob um único Load Balancer, as requisições em caminhos como `/auth/health` ou `/evaluation/evaluate` chegavam às aplicações com o prefixo completo do path, gerando respostas HTTP 404.
 * **Solução:** Criamos o manifesto `gitops/base/ingress.yaml` aplicando anotações do NGINX Ingress Controller com suporte a regex (`nginx.ingress.kubernetes.io/use-regex: "true"`) e captura de subrotas (`nginx.ingress.kubernetes.io/rewrite-target: /$2`), normalizando as requisições antes de entregá-las aos pods.
 
+### 7. Resolução de SG dos Managed Node Groups do EKS (Bloqueio de RDS e Redis)
+* **Desafio:** No EKS, worker nodes gerenciados via `aws_eks_node_group` sem launch template customizado herdam o Security Group primário do cluster (`aws_eks_cluster.main.vpc_config[0].cluster_security_group_id`), ignorando security groups avulsos criados no Terraform. Com isso, regras de ingresso do RDS (porta 5432) e ElastiCache Redis (porta 6379) ficavam incomunicáveis, gerando timeout de rede dentro dos pods.
+* **Solução:** Exportamos o atributo `cluster_primary_security_group_id` no módulo `modules/eks/outputs.tf` e o incluímos em `allowed_security_group_ids` nos módulos de RDS e Redis no `terraform/main.tf`, garantindo liberação imediata e segura de tráfego leste-oeste dentro da VPC.
+
+### 8. Sanitização de Senhas de Banco via URL-Encoding (RFC 3986)
+* **Desafio:** A geração de senhas aleatórias fortes via `random_password` do Terraform incluiu caracteres reservados (`#`, `[`, `]`, `<`, `>`). Na formatação padrão `postgresql://user:pass@host/db`, o caractere `#` truncava a URL como fragmento nos parsers de Go (`pgx`) e Python (`psycopg2`), resultando em erros de resolução de hostname `HOST: no such host`.
+* **Solução:** Aplicamos URL-encoding (percent-encoding) nos valores das senhas dentro do manifesto de Secrets do Kubernetes (`%23` para `#`, `%5B` para `[`, `%3C` para `<`, etc.), preservando a integridade da autenticação sem comprometer a entropia da senha.
+
+### 9. Reconciliação Declarativa do GitOps e Imutabilidade
+* **Desafio:** Testes rápidos manuais de `kubectl apply` no cluster eram sobrescritos periodicamente pelo ArgoCD devido ao mecanismo ativo de *self-healing*.
+* **Solução:** Confirmando o paradigma GitOps, as credenciais e endpoints corretos foram versionados no repositório Git em `gitops/base/secrets.yaml`. Após o commit e push para a branch `main`, o ArgoCD realizou a reconciliação automática, transicionando todos os 5 serviços (`auth`, `flag`, `targeting`, `evaluation`, `analytics`) para o estado **Synced & Healthy**.
+
+### 10. Atualização de Ciclo de Vida: EKS 1.31 e PostgreSQL 18.3
+* **Desafio:** Durante a execução do Terraform, o provisionamento do cluster EKS falhou com `InvalidParameterException: unsupported Kubernetes version 1.29` devido ao ciclo de descontinuação de versões do Amazon EKS.
+* **Solução:** Atualizamos a versão do cluster EKS para `1.31` e o RDS PostgreSQL para o release `18.3` com parameter group family `postgres18`, garantindo conformidade com os SLAs de suporte de longo prazo da AWS.
+
 ---
 
 ## 6. Estimativa de Custos AWS

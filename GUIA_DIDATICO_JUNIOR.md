@@ -338,6 +338,22 @@ Durante o desenvolvimento deste desafio, encontramos armadilhas clássicas que a
 * **O Problema:** Quando o Ingress Controller recebia uma chamada em `http://meu-alb/auth/health`, ele repassava `/auth/health` para o serviço. Como o app esperava `/health`, dava erro HTTP 404.
 * **O Que Fizemos:** Criamos o `gitops/base/ingress.yaml` usando a anotação `nginx.ingress.kubernetes.io/rewrite-target: /$2` com regex `path: /auth(/|$)(.*)`. Assim, o Ingress arranca o prefixo `/auth` antes de entregar para o pod!
 
+### 5. O Mistério do Security Group dos Nós do EKS (Timeout no RDS e Redis)
+* **O Problema:** O RDS PostgreSQL e o ElastiCache Redis foram configurados para aceitar conexões vindas do Security Group `eks_nodes`. Porém, ao tentar conectar da aplicação, dava timeout! Ao inspecionar os nós EC2 criados pelo EKS Managed Node Group, descobrimos que o EKS anexa automaticamente o Security Group primário do cluster (`cluster_primary_security_group_id`), e não o SG customizado criado avulso.
+* **O Que Fizemos:** Exportamos o `cluster_primary_security_group_id` no módulo do EKS e o adicionamos na lista `allowed_security_group_ids` do RDS e do Redis. A porta 5432 e 6379 abriram instantaneamente para os pods!
+
+### 6. Caracteres Especiais em Senhas de Banco (Quebra de URL RFC 3986)
+* **O Problema:** O Terraform gerou senhas fortes contendo caracteres como `#`, `[`, `]`, `<`, `>`. Quando colocamos a senha diretamente na URL `postgresql://user:pass#123@host/db`, o caractere `#` foi interpretado como o início do fragmento da URL pelos drivers do Go e Python, quebrando a conexão.
+* **O Que Fizemos:** Codificamos os caracteres especiais via URL-encoding (`%23` para `#`, `%5B` para `[`, etc.), normalizando as strings de conexão do banco.
+
+### 7. O Poder do GitOps: Por que Edições Manuais Sumiam?
+* **O Problema:** Quando tentávamos rodar `kubectl apply` para testar os segredos temporariamente, em menos de 1 minuto o ArgoCD desfazia tudo e voltava para o valor antigo `HOST`.
+* **O Que Fizemos:** Essa é a essência do GitOps! O ArgoCD opera com reconciliação ativa (*self-healing*). A única forma válida de alterar algo em produção é fazendo `git commit` e `git push origin main`. Assim que comitamos o `gitops/base/secrets.yaml`, o ArgoCD sincronizou e todas as 5 aplicações ficaram **Synced & Healthy**!
+
+### 8. Atualização do Kubernetes 1.31 e PostgreSQL 18.3
+* **O Problema:** A versão 1.29 do Kubernetes foi descontinuada na AWS EKS, gerando erro `400 InvalidParameterException: unsupported Kubernetes version 1.29`.
+* **O Que Fizemos:** Atualizamos a versão do cluster para **1.31** e atualizamos o motor do RDS para **PostgreSQL 18.3** com parameter group `postgres18`, garantindo conformidade com as versões vigentes da AWS.
+
 ---
 
 ## 9. Glossário de Sobrevivência DevOps
