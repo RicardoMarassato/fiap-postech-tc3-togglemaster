@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: targeting-service
-          image: 202191080012.dkr.ecr.us-east-1.amazonaws.com/togglemaster/targeting-service:latest
+          image: 202191080012.dkr.ecr.us-east-1.amazonaws.com/togglemaster/targeting-service:v1.0.0-6105f59
           ports:
             - containerPort: 8003
               name: http
