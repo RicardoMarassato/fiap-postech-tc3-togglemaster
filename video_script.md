@@ -1,146 +1,192 @@
-# Roteiro do Vídeo - Tech Challenge Fase 3
+# 🎬 Roteiro de Gravação Oficial - Tech Challenge Fase 3
 
-**Tempo estimado:** 10-15 minutos
-
----
-
-## Parte 1: Introdução (1-2 min)
-
-**O que falar:**
-- "Olá, sou Ricardo Marassato, RM 370358"
-- "Vou apresentar a entrega da Fase 3 do Tech Challenge: IaC, CI/CD com DevSecOps e GitOps"
-- "O projeto é o ToggleMaster, um sistema de feature flags que evoluímos da Fase 2"
-
-**O que mostrar:**
-- README.md no GitHub (scroll rápido pela estrutura)
-- Diagrama de arquitetura no README
+**Projeto:** ToggleMaster (IaC, DevSecOps & GitOps)  
+**Aluno:** Ricardo Marassato  
+**RM:** 370358  
+**Tempo estimado:** 12 a 15 minutos (Limite máximo: 20 minutos)  
 
 ---
 
-## Parte 2: Infraestrutura como Código - Terraform (3-4 min)
+## 📋 Checklist Pré-Gravação
 
-**O que falar:**
-- "Toda a infraestrutura foi codificada em Terraform, organizada em 7 módulos"
-- "Networking, EKS, RDS, ElastiCache, DynamoDB, SQS e ECR"
-- "Por limitação do AWS Academy, usamos a LabRole existente via data source"
+- [ ] **Resolução:** Gravação em 1080p (Full HD).
+- [ ] **Zoom/Fonte:** Zoom de 125% a 150% no navegador (GitHub e ArgoCD) e fonte ampliada no terminal e VS Code (14-16pt).
+- [ ] **ArgoCD Ativo:** Terminal com port-forward rodando:
+  ```bash
+  kubectl port-forward svc/argocd-server -n argocd 8080:443
+  ```
+- [ ] **Abas pré-abertas no Navegador:**
+  1. `https://localhost:8080` (ArgoCD logado: `admin` / `CcRvSF0gZ4AOifxn`).
+  2. Repositório no GitHub: `https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster`.
+  3. Aba de **Actions** no GitHub.
+  4. Pull Request de teste de segurança (se já criado).
+- [ ] **VS Code aberto:** Projeto `fiap-postech-tc3-togglemaster` com as pastas `terraform/`, `.github/workflows/` e `gitops/` visíveis.
 
-**O que mostrar:**
-1. Estrutura de pastas `terraform/`
-2. Abrir `main.tf` - mostrar os módulos sendo chamados
-3. Abrir `modules/eks/main.tf` - mostrar uso do LabRole
-4. Abrir `backend.tf` - mostrar remote state com S3
+---
 
-**Demonstração (se der tempo/créditos):**
+## 🎙️ Abertura: Identificação e Contexto (1 minuto)
+
+### 🖥️ O que mostrar na tela:
+- Página inicial do repositório no GitHub (`RicardoMarassato/fiap-postech-tc3-togglemaster`).
+- Dê scroll suave até o diagrama de arquitetura no `README.md`.
+
+### 🗣️ O que falar:
+> *"Olá, professores e avaliadores! Meu nome é Ricardo Marassato, RM 370358, e hoje apresento a entrega da Fase 3 do Tech Challenge da pós-graduação em DevOps da FIAP.*
+>
+> *Na Fase 2, construímos a arquitetura de 5 microsserviços do ToggleMaster (Auth, Flag, Targeting, Evaluation e Analytics). Porém, a operação sofria com deploys manuais via `kubectl apply`, falta de rastreabilidade, credenciais expostas e ausência de gates de segurança no pipeline.*
+>
+> *Nesta Fase 3, atendemos à diretriz da DevOps Solutions Inc.: 'Se não está no código, não existe'. Implementamos:*
+> 1. *Infraestrutura 100% como Código (IaC) com Terraform modular e Remote State no S3.*
+> 2. *Pipeline de CI com DevSecOps abrangendo SAST, SCA e Container Scanning com bloqueio estrito de vulnerabilidades críticas.*
+> 3. *Entrega Contínua orientada a GitOps com ArgoCD, garantindo o Git como fonte única da verdade (Single Source of Truth).*
+> 
+> *Vamos conferir cada um desses pilares!"*
+
+---
+
+## 🏗️ Ato 1: Infraestrutura como Código - Terraform (3 a 4 minutos)
+
+### 🖥️ O que mostrar na tela:
+1. No VS Code, abra a pasta `terraform/` e mostre a estrutura modular:
+   - `modules/networking`, `modules/eks`, `modules/rds`, `modules/elasticache`, `modules/dynamodb`, `modules/sqs`, `modules/ecr`.
+2. Abra o arquivo `terraform/backend.tf` (destaque o S3 e o State Locking).
+3. Abra o arquivo `terraform/main.tf` (destaque a chamada limpa dos módulos).
+4. Abra o terminal e execute os comandos para comprovar os recursos rodando na AWS:
+   ```bash
+   kubectl get nodes -o wide
+   aws rds describe-db-instances --query "DBInstances[*].[DBInstanceIdentifier,DBInstanceStatus,DBInstanceClass]" --output table
+   ```
+
+### 🗣️ O que falar:
+> *"Começando pela Infraestrutura como Código. Desenvolvemos uma arquitetura modular em Terraform, totalmente desacoplada e reutilizável:*
+>
+> - *No `backend.tf`, configuramos o **Remote State no Amazon S3** com **State Locking**, impedindo que execuções concorrentes corrompam o estado da infraestrutura.*
+> - *Como utilizamos uma conta pessoal da AWS (Opção B do desafio), criamos todas as **IAM Roles e Policies pelo Terraform**, seguindo o princípio de menor privilégio para o cluster EKS e os Worker Nodes.*
+> - *A infraestrutura provisionada contempla:*
+>   - *VPC completa com subnets públicas e privadas em duas Zonas de Disponibilidade (`us-east-1a` e `us-east-1b`), com Internet Gateway e NAT Gateway.*
+>   - *Cluster **Amazon EKS 1.31** com Managed Node Group.*
+>   - *Camada de persistência relacional com **3 instâncias RDS PostgreSQL** (`auth_db`, `flags_db`, `targeting_db`).*
+>   - *Cluster **ElastiCache Redis 7.1** para cache em memória das flags avaliadas.*
+>   - *Tabela **DynamoDB** (`ToggleMasterAnalytics`) no modelo On-Demand para eventos de telemetria.*
+>   - *Mensageria assíncrona com **Fila SQS e Dead Letter Queue (DLQ)**.*
+>   - *E os 5 repositórios no **Amazon ECR** para os containers.*
+>
+> *(Aponte para o terminal)*: *Aqui no terminal podemos validar: o EKS está ativo com os nós saudáveis e Ready, e as 3 instâncias de banco e o Redis estão operacionais na AWS."*
+
+---
+
+## 🔒 Ato 2: CI/CD com DevSecOps e Demonstração do Gate (4 a 5 minutos)
+
+> ⚠️ **Momento-chave da avaliação! Demonstre o pipeline falhando e depois passando.**
+
+### 🖥️ O que mostrar na tela:
+1. No VS Code, abra a pasta `.github/workflows/` e o arquivo `_reusable-python-ci.yml`.
+2. Destaque os 5 jobs:
+   - `build-and-test`
+   - `lint` (flake8, pylint, black)
+   - `security-scan` (Bandit SAST + Trivy SCA com `exit-code: 1` e `severity: CRITICAL`)
+   - `docker-build-push` (Trivy Container Scan + Push ECR)
+   - `update-gitops` (sed automático no `deployment.yaml`)
+3. Abra a aba **Pull Requests** ou **Actions** no GitHub.
+4. Mostre a execução do PR com falha de segurança provocada pelo pacote `pyyaml==5.1`.
+5. Abra os logs do Trivy mostrando o `CRITICAL` detectado.
+6. Mostre o commit de correção e a Action passando 100% verde.
+
+### 🗣️ O que falar:
+> *"Agora vamos para a esteira de Integração Contínua com DevSecOps. Criamos workflows reutilizáveis (`_reusable-python-ci.yml` e `_reusable-go-ci.yml`) que padronizam a governança de engenharia para todos os 5 microsserviços.*
+>
+> *Cada Pull Request ou Push dispara os seguintes estágios:*
+> 1. *`Build & Unit Test`: Compilação e execução de testes unitários com relatório de cobertura.*
+> 2. *`Lint & Static Analysis`: Verificação estática de código com flake8, pylint e black para Python, e golangci-lint para Go.*
+> 3. *`Security Scan (Shift-Left)`: Aqui aplicamos duas frentes essenciais de segurança antes do build:*
+>    - *SAST (Static Application Security Testing) usando Bandit para auditar o código-fonte contra más práticas.*
+>    - *SCA (Software Composition Analysis) usando Trivy para inspecionar dependências terceiras no `requirements.txt`.*
+>    - *E a nossa **Regra de Bloqueio (Security Gate)**: se o Trivy detectar qualquer vulnerabilidade com severidade `CRITICAL`, ele retorna exit-code 1 e bloqueia o pipeline imediatamente.*
+>
+> *Para demonstrar o funcionamento na prática, abri um Pull Request adicionando a dependência `pyyaml==5.1`, que possui a vulnerabilidade crítica `CVE-2019-20477` de Execução Remota de Código (RCE).*
+>
+> *(Mostre o PR no GitHub)*: *Vejam o resultado: o build e o linter passaram, mas o step de Security Scan falhou e bloqueou o Pull Request! Abrindo os logs do Trivy, vemos a detecção explícita da CVE Crítica.*
+>
+> *(Mostre a correção)*: *Em seguida, removi a dependência vulnerável. O pipeline reexecutou automaticamente, o Trivy atestou 0 vulnerabilidades críticas e o pipeline ficou 100% verde, autorizando o avanço!"*
+
+---
+
+## 🚀 Ato 3: Docker Build & GitOps com ArgoCD (3 a 4 minutos)
+
+### 🖥️ O que mostrar na tela:
+1. No VS Code, mostre as linhas 236 a 276 do `_reusable-python-ci.yml` (Job `update-gitops` atualizando o `deployment.yaml` com `sed`).
+2. Mude para a aba do navegador no **ArgoCD UI** (`https://localhost:8080`).
+3. Mostre os cards das 5 aplicações sincronizadas: `auth-service`, `flag-service`, `targeting-service`, `evaluation-service`, `analytics-service`.
+4. Clique em uma aplicação (ex: `flag-service`):
+   - Mostre a árvore de Pods verdes (**Synced / Healthy**).
+   - Clique no Pod e abra a aba **SUMMARY** (mostre a imagem oficial puxada do ECR).
+   - Clique no botão **APP DETAILS → HISTORY AND ROLLBACK** (mostre a lista de revisões vinculadas aos hashes do Git).
+5. Mostre no terminal que todos os pods estão rodando saudáveis:
+   ```bash
+   kubectl get pods -n togglemaster
+   ```
+
+### 🗣️ O que falar:
+> *"Com a aprovação na esteira de segurança e merge na branch `main`, entram em ação os dois últimos jobs do pipeline:*
+>
+> - *`Docker Build & Push`: Compila o container, executa um **Container Scan com Trivy** na imagem e publica no Amazon ECR com uma tag imutável baseada no commit hash (ex: `v1.0.0-SHA`).*
+> - *`Update GitOps`: Em vez de permitir que o CI execute comandos imperativos no cluster com credenciais administrativas, o pipeline atualiza declarativamente o arquivo `deployment.yaml` na pasta `gitops/` e faz commit automático.*
+>
+> *(Mude para a tela do ArgoCD)*: *E aqui temos o coração do GitOps: o **ArgoCD**.*
+>
+> - *Utilizamos o pattern **App of Apps** (`applications.yaml`), onde o ArgoCD gerencia a aplicação pai `togglemaster` e os 5 microsserviços.*
+> - *O ArgoCD monitora continuamente o repositório Git. Quando o bot do CI comita a nova tag da imagem, o ArgoCD detecta o 'drift' (diferença entre o estado desejado no Git e o estado atual no cluster) e dispara um **Rolling Update** automático, garantindo zero downtime.*
+> - *Como podem ver na interface:*
+>   - *Todas as 5 aplicações estão com status **Synced** e **Healthy**.*
+>   - *Clicando no Pod de `flag-service`, vemos a imagem oficial puxada diretamente do nosso ECR autenticado.*
+>   - *Na aba de **Histórico**, temos a rastreabilidade completa de todas as versões deployadas com autor, timestamp e hash do Git, permitindo rollback com 1 clique se necessário.*
+> - *Além disso, os dados sensíveis como URLs dos bancos RDS e Redis são gerenciados de forma centralizada através de Secrets do Kubernetes, eliminando credenciais em texto plano."*
+
+---
+
+## 💰 Ato 4: FinOps e Conclusão (1 a 2 minutos)
+
+### 🖥️ O que mostrar na tela:
+1. Mostre o arquivo `terraform/terraform.tfvars` no VS Code.
+2. Mostre o terminal com os pods e serviços ativos.
+3. Volte para a página principal do repositório no GitHub.
+
+### 🗣️ O que falar:
+> *"Para finalizar, um aspecto fundamental em engenharia de nuvem moderna: **FinOps e Governança de Custos**.*
+>
+> *Para viabilizar este ambiente complexo com o menor custo possível na AWS:*
+> - *Configuramos os nós do EKS com `t3.small` On-Demand, respeitando a cota da conta e limites de Free Tier.*
+> - *Utilizamos instâncias `db.t3.micro` para os 3 bancos RDS PostgreSQL e `cache.t3.micro` para o Redis (elegíveis ao Free Tier).*
+> - *Desativamos backups redundantes e métricas pagas do CloudWatch Logs para evitar custos de ingestão desnecessários.*
+> - *E mantivemos a tabela DynamoDB em modo `PAY_PER_REQUEST`, gerando custo zero enquanto ociosa.*
+>
+> *E cumprindo as boas práticas de ciclo de vida, assim que finalizarmos esta demonstração, executamos o comando `terraform destroy` para zerar qualquer consumo de recursos da nuvem.*
+>
+> *Com isso, cobrimos 100% dos requisitos da Fase 3: IaC com Terraform, DevSecOps com SAST/SCA/Gates no GitHub Actions, e GitOps com ArgoCD e EKS na AWS.*
+>
+> *Muito obrigado e fico à disposição para dúvidas!"*
+
+---
+
+## 📌 Guia Rápido de Comandos para a Apresentação
+
 ```bash
-cd terraform
-terraform init
-terraform plan
-# Mostrar o output do plan (não precisa aplicar se não tiver créditos)
-```
+# 1. Checar nós do EKS
+kubectl get nodes -o wide
 
----
-
-## Parte 3: Pipeline CI/CD com DevSecOps (4-5 min)
-
-**O que falar:**
-- "Cada microsserviço tem um pipeline com estágios de segurança"
-- "SAST com gosec para Go e bandit para Python"
-- "SCA e Container Scan com Trivy"
-- "Se encontrar vulnerabilidade CRITICAL, o pipeline bloqueia"
-
-**O que mostrar:**
-1. Pasta `.github/workflows/`
-2. Abrir `ci-auth-service.yml` - explicar os jobs (build, lint, security, push)
-3. Abrir `_reusable-python-ci.yml` - mostrar workflow reutilizável
-4. GitHub Actions - mostrar uma execução passada (se tiver)
-
-**Demonstração do bloqueio por vulnerabilidade:**
-1. Editar `services/flag-service/requirements.txt`
-2. Adicionar uma dependência vulnerável: `requests==2.25.0`
-3. Commit e push
-4. Mostrar o pipeline falhando no Trivy
-5. Reverter a mudança
-6. Mostrar o pipeline passando
-
-> **Dica:** Prepare esse commit antes de gravar para não perder tempo.
-
----
-
-## Parte 4: GitOps com ArgoCD (2-3 min)
-
-**O que falar:**
-- "O deploy não é feito pelo CI diretamente no cluster"
-- "Usamos GitOps: o CI atualiza a tag da imagem no repositório"
-- "O ArgoCD monitora o repositório e sincroniza automaticamente"
-
-**O que mostrar:**
-1. Pasta `gitops/` - estrutura
-2. Abrir `gitops/apps/flag-service/deployment.yaml` - mostrar a tag da imagem
-3. Abrir `gitops/argocd/applications.yaml` - mostrar configuração das apps
-4. ArgoCD UI (se tiver cluster rodando):
-   - Mostrar as 5 aplicações
-   - Mostrar o sync automático
-
----
-
-## Parte 5: Pipeline de Destroy (1 min)
-
-**O que falar:**
-- "Para economizar créditos, criei um pipeline de destroy com trigger manual"
-- "Exige confirmação digitando DESTROY para evitar acidentes"
-
-**O que mostrar:**
-1. GitHub Actions → Terraform → Run workflow
-2. Mostrar o dropdown com opção "destroy"
-3. Mostrar o campo de confirmação
-4. (Não precisa executar, só mostrar que existe)
-
----
-
-## Parte 6: Encerramento (1 min)
-
-**O que falar:**
-- "Resumindo: toda infraestrutura como código, pipelines com gates de segurança, e GitOps para deploys"
-- "O código está no repositório: github.com/RicardoMarassato/fiap-postech-tc3-togglemaster"
-- "Obrigado!"
-
----
-
-## Checklist Pré-Gravação
-
-- [ ] AWS Academy logado (se for fazer terraform plan)
-- [ ] Repositório GitHub público
-- [ ] Preparar o commit com vulnerabilidade (requests==2.25.0) em uma branch separada
-- [ ] Ter o ArgoCD rodando (opcional, se tiver créditos)
-- [ ] VS Code ou editor aberto com os arquivos principais
-- [ ] Fechar abas/apps desnecessárias
-
----
-
-## Dicas de Gravação
-
-1. **Resolução:** 1080p mínimo para o código ser legível
-2. **Fonte:** Aumentar tamanho da fonte no terminal e editor (14-16pt)
-3. **Zoom:** Dar zoom no navegador (125-150%) ao mostrar GitHub
-4. **Fala:** Pausar entre as seções, não precisa correr
-5. **Erros:** Se algo der errado, explicar o que aconteceu (demonstra conhecimento)
-
----
-
-## Comandos Úteis para a Demo
-
-```bash
-# Terraform
-cd terraform
-terraform init
-terraform plan
-terraform apply  # só se tiver créditos
-
-# kubectl (se tiver cluster)
-aws eks update-kubeconfig --region us-east-1 --name togglemaster-prod-eks
+# 2. Checar pods do ToggleMaster
 kubectl get pods -n togglemaster
 
-# ArgoCD
+# 3. Checar status das aplicações no ArgoCD via CLI
+kubectl get applications -n argocd
+
+# 4. Iniciar port-forward do ArgoCD (se cair a conexão)
 kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# 5. Obter senha do ArgoCD
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+
+# 6. Destruir infraestrutura após a gravação
+cd terraform
+terraform destroy
 ```
