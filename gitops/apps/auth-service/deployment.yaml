@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: 202191080012.dkr.ecr.us-east-1.amazonaws.com/togglemaster/auth-service:latest
+          image: 202191080012.dkr.ecr.us-east-1.amazonaws.com/togglemaster/auth-service:v1.0.0-b656c36
           ports:
             - containerPort: 8001
               name: http
