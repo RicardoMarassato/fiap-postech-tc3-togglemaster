@@ -18,6 +18,10 @@ on:
       - '.github/workflows/ci-flag-service.yml'
       - '.github/workflows/_reusable-python-ci.yml'
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
   ci:
     name: Flag Service CI

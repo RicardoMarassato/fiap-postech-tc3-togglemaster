@@ -18,6 +18,10 @@ on:
       - '.github/workflows/ci-evaluation-service.yml'
       - '.github/workflows/_reusable-go-ci.yml'
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
   ci:
     name: Evaluation Service CI
