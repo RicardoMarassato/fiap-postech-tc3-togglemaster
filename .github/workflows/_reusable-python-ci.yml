@@ -276,5 +276,7 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore(gitops): update ${{ inputs.service_name }} to ${{ needs.docker-build-push.outputs.image_tag }}"
-            git push
+            for i in {1..5}; do
+              git pull --rebase origin main && git push && break || sleep 2
+            done
           fi
