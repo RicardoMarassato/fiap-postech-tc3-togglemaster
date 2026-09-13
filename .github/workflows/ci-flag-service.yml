@@ -21,6 +21,7 @@ on:
 permissions:
   contents: write
   id-token: write
+  security-events: write
 
 jobs:
   ci:
@@ -30,5 +31,4 @@ jobs:
       service_name: flag-service
       service_path: services/flag-service
       python_version: '3.12'
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    secrets: inherit
