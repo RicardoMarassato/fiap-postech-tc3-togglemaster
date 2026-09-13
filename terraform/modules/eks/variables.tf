@@ -45,6 +45,7 @@ variable "use_lab_role" {
 variable "lab_role_arn" {
   description = "ARN da LabRole do AWS Academy"
   type        = string
+  default     = ""
 }
 
 # =============================================================================

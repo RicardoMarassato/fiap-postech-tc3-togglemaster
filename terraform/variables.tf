@@ -31,9 +31,9 @@ variable "lab_role_arn" {
 }
 
 variable "use_lab_role" {
-  description = "Se true, usa LabRole existente. Se false, cria roles (conta pessoal)"
+  description = "Se true, usa LabRole existente (AWS Academy). Se false, cria roles automaticamente via Terraform (conta pessoal)"
   type        = bool
-  default     = true # Default para AWS Academy
+  default     = false # Default false para conta pessoal
 }
 
 # =============================================================================
@@ -80,6 +80,12 @@ variable "eks_node_instance_types" {
   default     = ["t3.medium"]
 }
 
+variable "eks_node_capacity_type" {
+  description = "Tipo de capacidade (ON_DEMAND ou SPOT)"
+  type        = string
+  default     = "ON_DEMAND"
+}
+
 variable "eks_node_desired_size" {
   description = "Número desejado de nodes"
   type        = number
@@ -95,7 +101,13 @@ variable "eks_node_min_size" {
 variable "eks_node_max_size" {
   description = "Número máximo de nodes"
   type        = number
-  default     = 4
+  default     = 3
+}
+
+variable "eks_node_disk_size" {
+  description = "Tamanho do disco dos nodes em GB"
+  type        = number
+  default     = 20
 }
 
 # =============================================================================
@@ -117,13 +129,25 @@ variable "rds_allocated_storage" {
 variable "rds_engine_version" {
   description = "Versão do PostgreSQL"
   type        = string
-  default     = "18.3"
+  default     = "16.3"
 }
 
 variable "rds_multi_az" {
   description = "Habilitar Multi-AZ para o RDS"
   type        = bool
-  default     = false # false para economizar custos em dev
+  default     = false # false para economizar custos
+}
+
+variable "rds_backup_retention_period" {
+  description = "Dias de retenção de backup (0 desabilita backups)"
+  type        = number
+  default     = 0
+}
+
+variable "rds_performance_insights_enabled" {
+  description = "Habilitar Performance Insights"
+  type        = bool
+  default     = false
 }
 
 # =============================================================================

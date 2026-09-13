@@ -7,7 +7,7 @@
 
 terraform {
   backend "s3" {
-    bucket       = "tf-state-toggle-master-504636433271"
+    bucket       = "toggle-master-tc3"
     key          = "togglemaster/terraform.tfstate"
     region       = "us-east-1"
     encrypt      = true

@@ -112,8 +112,8 @@ resource "aws_db_instance" "databases" {
   skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.name_prefix}-${each.value.name}-final-snapshot"
 
-  # Performance Insights (gratuito no t3.micro)
-  performance_insights_enabled = true
+  # Performance Insights
+  performance_insights_enabled = var.performance_insights_enabled
 
   # Auto minor version upgrade
   auto_minor_version_upgrade = true

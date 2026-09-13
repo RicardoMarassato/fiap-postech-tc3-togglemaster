@@ -51,9 +51,11 @@ module "eks" {
 
   # Node Group config
   node_instance_types = var.eks_node_instance_types
+  node_capacity_type  = var.eks_node_capacity_type
   node_desired_size   = var.eks_node_desired_size
   node_min_size       = var.eks_node_min_size
   node_max_size       = var.eks_node_max_size
+  node_disk_size      = var.eks_node_disk_size
 
   depends_on = [module.networking]
 }
@@ -75,10 +77,12 @@ module "rds" {
   ]
 
   # Configuração das instâncias
-  instance_class    = var.rds_instance_class
-  allocated_storage = var.rds_allocated_storage
-  engine_version    = var.rds_engine_version
-  multi_az          = var.rds_multi_az
+  instance_class                = var.rds_instance_class
+  allocated_storage            = var.rds_allocated_storage
+  engine_version               = var.rds_engine_version
+  multi_az                     = var.rds_multi_az
+  backup_retention_period      = var.rds_backup_retention_period
+  performance_insights_enabled = var.rds_performance_insights_enabled
 
   # Bancos de dados: auth, flags, targeting
   # 3 DBs - 3 instâncias

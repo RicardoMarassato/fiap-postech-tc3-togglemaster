@@ -60,13 +60,13 @@ variable "allocated_storage" {
 variable "max_allocated_storage" {
   description = "Armazenamento máximo para autoscaling (0 = desabilitado)"
   type        = number
-  default     = 100
+  default     = 20
 }
 
 variable "engine_version" {
   description = "Versão do PostgreSQL"
   type        = string
-  default     = "18.3-R2"
+  default     = "16.3"
 }
 
 variable "multi_az" {
@@ -96,7 +96,13 @@ variable "skip_final_snapshot" {
 variable "backup_retention_period" {
   description = "Dias de retenção de backups"
   type        = number
-  default     = 7
+  default     = 0
+}
+
+variable "performance_insights_enabled" {
+  description = "Habilitar Performance Insights"
+  type        = bool
+  default     = false
 }
 
 variable "backup_window" {

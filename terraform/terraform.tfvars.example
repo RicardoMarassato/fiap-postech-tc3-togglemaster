@@ -36,9 +36,10 @@ private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
 # -----------------------------------------------------------------------------
 eks_cluster_version     = "1.31"
 eks_node_instance_types = ["t3.medium"]
+eks_node_capacity_type  = "ON_DEMAND"
 eks_node_desired_size   = 2
 eks_node_min_size       = 1
-eks_node_max_size       = 4
+eks_node_max_size       = 3
 
 # -----------------------------------------------------------------------------
 # RDS (PostgreSQL)
