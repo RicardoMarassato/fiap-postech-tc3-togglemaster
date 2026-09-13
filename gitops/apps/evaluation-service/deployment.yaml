@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/name: evaluation-service
     app.kubernetes.io/part-of: togglemaster
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: evaluation-service
