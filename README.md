@@ -12,7 +12,7 @@ O **ToggleMaster V3** representa a evolução definitiva da arquitetura de micro
 * **RM:** 370358
 * **Discord:** marassato7700
 * **Repositório do GitHub:** [fiap-postech-tc3-togglemaster](https://github.com/RicardoMarassato/fiap-postech-tc3-togglemaster)
-* **Link do Vídeo de Demonstração:** [Vídeo de Demonstração (YouTube / Google Drive)](https://drive.google.com/) *(Preencher com o link da gravação)*
+* **Link do Vídeo de Demonstração:** [Vídeo de Demonstração (Google Drive)](https://drive.google.com/file/d/1U-_e2UfgxYaYd5NEWzi1qBQnZunQKddE/view?usp=sharing)
 * **Documentação Técnica Completa:** [Ricardo-Marassato-readme-tech-phase-3.md](Ricardo-Marassato-readme-tech-phase-3.md)
 
 ---
